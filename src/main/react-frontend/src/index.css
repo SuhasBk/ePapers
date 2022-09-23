@@ -1,0 +1,71 @@
+body {
+    background-color: #424242;
+    color: white;
+}
+
+.container {
+    margin-top: 5%;
+    text-align: center;
+}
+
+h1 {
+    font-family: cursive;
+    font-size: 7vw;
+}
+
+p {
+    font-size: 2vw;
+}
+
+#editionPicker {
+    margin-top: 5%;
+    font-size: 1.5vw 1.5vh;
+}
+
+#dropdown-cities, #downloadButton, #uname, #password, #loginButton {
+    font-size: 1vw;
+}
+
+.footer {
+    font-size: 2vw;
+}
+
+.logout {
+    position: absolute;
+    top: 1%;
+    right: 1%;
+    font-size: 1vw;
+}
+
+.dropdown-menu {
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+#editionDate {
+    margin: 0 auto;
+    width: 10%;
+}
+
+#userEmail {
+    margin: 0 auto;
+    width: 25%;
+}
+
+@media only screen and (max-width: 500px) {
+    .footer {
+        font-size: 3vw;
+    }
+
+    #dropdown-cities, #downloadButton, #uname, #password, #loginButton, .logout {
+       font-size: 2vw;
+    }
+}
+
+@media only screen and (max-width: 1300px) {
+    #editionDate, #userEmail {
+        margin: 0 auto;
+        width: 25vw;
+        font-size: 1.5vw;
+    }
+}
