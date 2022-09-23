@@ -1,7 +1,7 @@
 FROM maven:latest AS build
 COPY src /home/epapers/src
 COPY pom.xml /home/epapers
-RUN mvn -f /home/epapers/pom.xml package spring-boot:repackage
+RUN mvn -f /home/epapers/pom.xml install
 
 FROM eclipse-temurin:11-alpine
 COPY --from=build /home/epapers/target/*.jar ./epapers.jar
