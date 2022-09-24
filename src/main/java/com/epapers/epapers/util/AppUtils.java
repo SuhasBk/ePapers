@@ -71,7 +71,7 @@ public class AppUtils {
     
     public static String getTOIEditions() {
         String toiEditions = "[ { \"editionName\": \"Ahmedabad\", \"editionId\": \"toiac\" }, { \"editionName\": \"Bangalore\", \"editionId\": \"toibgc\" }, { \"editionName\": \"Bhopal\", \"editionId\": \"toibhoc\" }, { \"editionName\": \"Chandigarh\", \"editionId\": \"toicgct\" }, { \"editionName\": \"Chennai\", \"editionId\": \"toich\" }, { \"editionName\": \"Delhi\", \"editionId\": \"cap\" }, { \"editionName\": \"Goa\", \"editionId\": \"toigo\" }, { \"editionName\": \"Hyderabad\", \"editionId\": \"toih\" }, { \"editionName\": \"Jaipur\", \"editionId\": \"toijc\" }, { \"editionName\": \"Kochi\", \"editionId\": \"toikrko\" }, { \"editionName\": \"Kolkata\", \"editionId\": \"toikc\" }, { \"editionName\": \"Lucknow\", \"editionId\": \"toilc\" }, { \"editionName\": \"Mumbai\", \"editionId\": \"toim\" }, { \"editionName\": \"Pune\", \"editionId\": \"toipuc\" } ]";
-    return toiEditions;
+        return toiEditions;
     }
 
     public static void compressPDF(Epaper epaper) throws Exception {

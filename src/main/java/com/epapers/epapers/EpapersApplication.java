@@ -10,7 +10,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import com.epapers.epapers.model.EpapersBot;
 import com.epapers.epapers.util.DesktopApp;
 
 import lombok.extern.slf4j.Slf4j;
@@ -55,14 +59,24 @@ public class EpapersApplication {
 	}
 
 	public static void main(String[] args) {
-		if (args.length != 0 && (args[0].equals("HT") || args[0].equals("TOI"))) {
-			try {
-				DesktopApp.download(args[0], getDate());
-			} catch (Exception e) {
-				log.error("Something went wrong...", e);
+		if (args.length != 0) {
+			if (args[0].equals("HT") || args[0].equals("TOI")) {
+				try {
+					DesktopApp.download(args[0], getDate());
+				} catch (Exception e) {
+					log.error("Something went wrong...", e);
+				}
 			}
 		} else {
 			SpringApplication.run(EpapersApplication.class, args);
+			new Thread(() -> {
+				try {
+					TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+					botsApi.registerBot(new EpapersBot());
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+			}).start();
 		}
 	}
 

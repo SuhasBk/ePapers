@@ -31,9 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 public class EpaperService {
 
     @Autowired
-    ObjectMapper objectMapper;
-
-    @Autowired
     EmailService emailService;
 
     private final String HT_BASE_URL = "https://epaper.hindustantimes.com";
@@ -54,6 +51,7 @@ public class EpaperService {
     }
 
     public List<Edition> getTOIEditionList() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
         String editions = AppUtils.getTOIEditions();
         return Arrays.asList(objectMapper.readValue(editions, Edition[].class));
     }
