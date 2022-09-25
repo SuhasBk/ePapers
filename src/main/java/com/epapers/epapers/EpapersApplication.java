@@ -1,15 +1,20 @@
 package com.epapers.epapers;
 
+import java.io.IOException;
+import java.net.URL;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -20,6 +25,7 @@ import com.epapers.epapers.util.DesktopApp;
 import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
+@EnableScheduling
 @Slf4j
 public class EpapersApplication {
 
@@ -29,6 +35,16 @@ public class EpapersApplication {
 		String TODAYS_DATE = dtf.format(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
 		log.info("Today's date (default) is : {}", TODAYS_DATE);
 		return TODAYS_DATE;
+	}
+
+	@Scheduled(fixedRate = 15, timeUnit = TimeUnit.MINUTES)
+	public void scheduleFixedRateTask() {
+		try {
+			new URL("https://epapers.onrender.com/").openStream();
+			System.out.println("keeping it alive!");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Bean
