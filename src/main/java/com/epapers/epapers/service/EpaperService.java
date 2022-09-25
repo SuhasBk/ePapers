@@ -159,8 +159,7 @@ public class EpaperService {
         String DAY = dateSplit[0];
         String MONTH = dateSplit[1];
         String YEAR = dateSplit[2];
-        String metaUrl = String.format(TOI_META_URL, mainEdition, YEAR, MONTH, DAY, date.replaceAll("/",
-"_"), mainEdition);
+        String metaUrl = String.format(TOI_META_URL, mainEdition, YEAR, MONTH, DAY, date.replaceAll("/","_"), mainEdition);
 
         Map<String, Object> meta = AppUtils.getTOIJsonObject(metaUrl);
         List<Object> metaData = Arrays.asList(meta.get("DayIndex"));

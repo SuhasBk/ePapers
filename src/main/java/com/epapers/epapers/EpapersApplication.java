@@ -14,7 +14,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import com.epapers.epapers.model.EpapersBot;
+import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.DesktopApp;
 
 import lombok.extern.slf4j.Slf4j;

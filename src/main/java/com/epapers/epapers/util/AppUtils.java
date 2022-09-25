@@ -77,7 +77,7 @@ public class AppUtils {
     public static void compressPDF(Epaper epaper) throws Exception {
         String src = epaper.getFile().getAbsolutePath();
         String dest = src.replace(".pdf", "_tmp.pdf");
-        float resizeFactor = 0.5f;
+        float resizeFactor = 1.0f;
         PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
         int pages = pdfDoc.getNumberOfPages();
 

@@ -1,4 +1,4 @@
-package com.epapers.epapers.model;
+package com.epapers.epapers.telegram;
 
 import org.telegram.abilitybots.api.util.AbilityUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -9,7 +9,9 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import com.epapers.epapers.EpapersApplication;
+import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.service.EpaperService;
+import com.epapers.epapers.util.AppUtils;
 
 
 public class EpapersBot extends TelegramLongPollingBot {
@@ -27,7 +29,6 @@ public class EpapersBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        System.out.println("Bot Token:" + BOT_TOKEN);
         return BOT_TOKEN;
     }
 
@@ -54,7 +55,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                     case "HT":
                         editions.append("💡 Copy the WHOLE text for your city and type: 'download <copied_text>'\n\n");
                         editions.append("Example: download Bengaluru_102_HT\n\n");
-                        service.getHTEditionList().forEach(edition -> editions.append("👉 "+edition.editionName + "_" + Double.valueOf(edition.editionId).intValue() + "_" + "HT\n\n"));
+                        service.getHTEditionList().forEach(edition -> editions.append("👉 "+edition.getEditionName() + "_" + Double.valueOf(edition.getEditionId()).intValue() + "_" + "HT\n\n"));
                         executeAsync(new SendMessage(chatId, editions.toString()));
                         // trips = editions.size() / limit;
                         // leftover = editions.size() % limit;
@@ -71,7 +72,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                     case "TOI":
                         editions.append("💡 Copy the WHOLE text for your city and type: 'download <copied_text>'\n\n");
                         editions.append("Example: download Bangalore_toibgc_TOI\n\n");
-                        service.getTOIEditionList().forEach(edition -> editions.append("👉 "+edition.editionName + "_" + edition.editionId + "_" + "TOI\n\n"));
+                        service.getTOIEditionList().forEach(edition -> editions.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "TOI\n\n"));
                         executeAsync(new SendMessage(chatId, editions.toString()));
                         // trips = editions.size() / limit;
                         // leftover = editions.size() % limit;
@@ -104,10 +105,8 @@ public class EpapersBot extends TelegramLongPollingBot {
                                             break;
                                         case "TOI":
                                             Epaper TOIpdf = (Epaper) service.getTOIpdf(editionId.toLowerCase(), EpapersApplication.getDate()).get("epaper");
-                                            if(executeAsync(new SendDocument(chatId, new InputFile(TOIpdf.getFile())))
-                                            .get().getText().toLowerCase().contains("broken")) {
-                                                throw new Exception();
-                                            }
+                                            AppUtils.compressPDF(TOIpdf);
+                                            executeAsync(new SendDocument(chatId, new InputFile(TOIpdf.getFile())));
                                             break;
                                     }
                                 } catch(Exception e) {
