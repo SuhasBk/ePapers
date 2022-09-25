@@ -40,6 +40,7 @@ public class EpapersApplication {
 	}
 
 	public static void main(String[] args) {
+		System.out.println(Runtime.getRuntime().maxMemory());
 		if (args.length != 0) {
 			if (args[0].equals("HT") || args[0].equals("TOI")) {
 				try {

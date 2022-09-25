@@ -6,4 +6,4 @@ RUN mvn -f /home/epapers/pom.xml install
 FROM eclipse-temurin:11-alpine
 COPY --from=build /home/epapers/target/*.jar ./epapers.jar
 EXPOSE 8000:8000
-ENTRYPOINT [ "java", "-jar", "./epapers.jar" ]
+ENTRYPOINT [ "java", "-jar", "-XX:MaxDirectMemorySize=2048M", "./epapers.jar" ]
