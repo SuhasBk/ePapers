@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -103,18 +104,18 @@ public class EpaperController {
     }
 
     @GetMapping("/file")
-    public ResponseEntity<ByteArrayResource> getFile(@RequestParam("name") String fileName) throws Exception{
-        File requestedFiled = new File(fileName);
+    public ResponseEntity<FileSystemResource> getFile(@RequestParam("name") String fileName) throws Exception{
+        File requestedFile = new File(fileName);
 
-        if(!requestedFiled.exists() || !requestedFiled.getName().endsWith("pdf")) {
+        if (!requestedFile.exists() || !requestedFile.getName().endsWith("pdf")) {
             return ResponseEntity.notFound().build();
         }
 
-        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(requestedFiled.toPath()));
+        FileSystemResource resource = new FileSystemResource(requestedFile);
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + requestedFiled.getName());
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + requestedFile.getName());
 
-        ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
+        ResponseEntity<FileSystemResource> response = ResponseEntity.ok()
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
