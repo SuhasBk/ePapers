@@ -24,7 +24,6 @@ import org.springframework.web.server.ResponseStatusException;
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.service.EpaperService;
-import com.epapers.epapers.util.AppUtils;
 
 @RestController
 @RequestMapping("/api")
@@ -99,8 +98,6 @@ public class EpaperController {
 
         if (emailId != null && !emailId.isEmpty()) {
             service.mailPDF(emailId, mainEdition, date, publication);
-        } else {
-            AppUtils.deleteFile(pdfDocument.getFile());
         }
         return response;
     }

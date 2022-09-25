@@ -7,7 +7,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import com.epapers.epapers.model.Epaper;
-import com.epapers.epapers.util.AppUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,9 +40,6 @@ public class EmailService {
             log.info("EMAIL SENT SUCCESSFULLY!");
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            AppUtils.deleteFile(epaper.getFile());
-            System.gc();
         }
     }
 }

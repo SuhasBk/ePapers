@@ -21,6 +21,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 import com.epapers.epapers.telegram.EpapersBot;
+import com.epapers.epapers.util.AppUtils;
 import com.epapers.epapers.util.DesktopApp;
 
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +76,7 @@ public class EpapersApplication {
 		try {
 			File currDir = new File(".");
 			for(File file: currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
-				file.delete();
+				AppUtils.deleteFile(file);
 				System.out.println("Old files purged successfully!");
 			}
 		} catch (Exception e) {
