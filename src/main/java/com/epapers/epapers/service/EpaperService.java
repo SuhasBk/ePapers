@@ -186,7 +186,7 @@ public class EpaperService {
                     epaper = (Epaper) getTOIpdf(mainEdition, date).get("epaper");
                 }
                 System.gc();
-                AppUtils.compressPDF(epaper);
+                // AppUtils.compressPDF(epaper);
                 emailService.mailPDF(emailId, epaper);
             } catch (Exception e) {
                 e.printStackTrace();

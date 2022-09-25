@@ -71,13 +71,22 @@ public class EpapersApplication {
 	}
 
 	@Scheduled(fixedRate = 1, timeUnit = TimeUnit.DAYS)
-	public void cleaUp() {
+	public void cleanUp() {
 		try {
 			File currDir = new File(".");
 			for(File file: currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
 				file.delete();
 				System.out.println("Old files purged successfully!");
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
+	public void GC() {
+		try {
+			System.gc();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

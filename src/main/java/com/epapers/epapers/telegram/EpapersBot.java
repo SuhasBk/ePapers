@@ -11,7 +11,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.epapers.epapers.EpapersApplication;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.service.EpaperService;
-import com.epapers.epapers.util.AppUtils;
 
 
 public class EpapersBot extends TelegramLongPollingBot {
@@ -21,6 +20,7 @@ public class EpapersBot extends TelegramLongPollingBot {
     public static String BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
     public static String BOT_USERNAME = "ePapers";
     public static String POLL_ANSWER;
+    public static String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
 
     @Override
     public String getBotUsername() {
@@ -39,19 +39,15 @@ public class EpapersBot extends TelegramLongPollingBot {
             try {
                 String userMessage = update.getMessage().getText().toUpperCase();
                 StringBuilder editions = new StringBuilder();
-                // int limit = 10;
-                // int trips;
-                // int leftover;
-                // int offset;
                 switch(userMessage) {
                     case "HTBNG":
                         Epaper htPdf = (Epaper) service.getHTpdf("102", EpapersApplication.getDate()).get("epaper");
-                        executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + htPdf.getFile().getName()));
+                        executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(htPdf.getFile())));
                         break;
                     case "TOIBNG":
                         Epaper toiPdf = (Epaper) service.getTOIpdf("toibgc", EpapersApplication.getDate()).get("epaper");
-                        executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + toiPdf.getFile().getName()));
+                        executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(toiPdf.getFile())));
                         break;
                     case "HT":
@@ -59,34 +55,12 @@ public class EpapersBot extends TelegramLongPollingBot {
                         editions.append("Example: download Bengaluru_102_HT\n\n");
                         service.getHTEditionList().forEach(edition -> editions.append("👉 "+edition.getEditionName() + "_" + Double.valueOf(edition.getEditionId()).intValue() + "_" + "HT\n\n"));
                         executeAsync(new SendMessage(chatId, editions.toString()));
-                        // trips = editions.size() / limit;
-                        // leftover = editions.size() % limit;
-                        // offset = 0;
-                        // // send in batches of the limit
-                        // while (trips > 0) {
-                        //     executeAsync(new SendPoll(chatId, "Choose your city:", editions.subList(offset, offset + limit)));
-                        //     offset += limit;
-                        //     trips -= 1;
-                        // }
-                        // // send leftover options: (offset+leftover - offset = leftover) < 10
-                        // executeAsync(new SendPoll(chatId, "Choose your city:", editions.subList(offset, offset + leftover)));
                         break;
                     case "TOI":
                         editions.append("💡 Copy the WHOLE text for your city and type: 'download <copied_text>'\n\n");
                         editions.append("Example: download Bangalore_toibgc_TOI\n\n");
                         service.getTOIEditionList().forEach(edition -> editions.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "TOI\n\n"));
                         executeAsync(new SendMessage(chatId, editions.toString()));
-                        // trips = editions.size() / limit;
-                        // leftover = editions.size() % limit;
-                        // offset = 0;
-                        // // send in batches of the limit
-                        // while (trips > 0) {
-                        //     executeAsync(new SendPoll(chatId, "Choose your city:", editions.subList(offset, offset + limit)));
-                        //     offset += limit;
-                        //     trips -= 1;
-                        // }
-                        // // send leftover options: (offset+leftover - offset = leftover) < 10
-                        // executeAsync(new SendPoll(chatId, "Choose your city:", editions.subList(offset, offset + leftover)));
                         break;
                     default:
                         if(userMessage.startsWith("DOWNLOAD ")) {
@@ -103,13 +77,13 @@ public class EpapersBot extends TelegramLongPollingBot {
                                     switch(publication) {
                                         case "HT":
                                             Epaper HTpdf = (Epaper) service.getHTpdf(editionId, EpapersApplication.getDate()).get("epaper");
-                                            executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + HTpdf.getFile().getName()));
+                                            executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, HTpdf.getFile().getName())));
                                             executeAsync(new SendDocument(chatId, new InputFile(HTpdf.getFile())));
                                             break;
                                         case "TOI":
                                             Epaper TOIpdf = (Epaper) service.getTOIpdf(editionId.toLowerCase(), EpapersApplication.getDate()).get("epaper");
-                                            AppUtils.compressPDF(TOIpdf);
-                                            executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + TOIpdf.getFile().getName()));
+                                            // AppUtils.compressPDF(TOIpdf);
+                                            executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, TOIpdf.getFile().getName())));
                                             executeAsync(new SendDocument(chatId, new InputFile(TOIpdf.getFile())));
                                             break;
                                     }
