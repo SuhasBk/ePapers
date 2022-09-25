@@ -1,5 +1,6 @@
 package com.epapers.epapers;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.time.ZoneId;
@@ -37,12 +38,47 @@ public class EpapersApplication {
 		return TODAYS_DATE;
 	}
 
+	public static void main(String[] args) {
+		if (args.length != 0) {
+			if (args[0].equals("HT") || args[0].equals("TOI")) {
+				try {
+					DesktopApp.download(args[0], getDate());
+				} catch (Exception e) {
+					log.error("Something went wrong...", e);
+				}
+			}
+		} else {
+			SpringApplication.run(EpapersApplication.class, args);
+			new Thread(() -> {
+				try {
+					TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+					botsApi.registerBot(new EpapersBot());
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+			}).start();
+		}
+	}
+
 	@Scheduled(fixedRate = 15, timeUnit = TimeUnit.MINUTES)
-	public void scheduleFixedRateTask() {
+	public void keepAlive() {
 		try {
 			new URL("https://epapers.onrender.com/").openStream();
 			System.out.println("keeping it alive!");
 		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Scheduled(fixedRate = 1, timeUnit = TimeUnit.DAYS)
+	public void cleaUp() {
+		try {
+			File currDir = new File(".");
+			for(File file: currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
+				file.delete();
+				System.out.println("Old files purged successfully!");
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -72,28 +108,6 @@ public class EpapersApplication {
 		props.put("mail.debug", "false");
 
 		return mailSender;
-	}
-
-	public static void main(String[] args) {
-		if (args.length != 0) {
-			if (args[0].equals("HT") || args[0].equals("TOI")) {
-				try {
-					DesktopApp.download(args[0], getDate());
-				} catch (Exception e) {
-					log.error("Something went wrong...", e);
-				}
-			}
-		} else {
-			SpringApplication.run(EpapersApplication.class, args);
-			new Thread(() -> {
-				try {
-					TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-					botsApi.registerBot(new EpapersBot());
-				} catch (TelegramApiException e) {
-					e.printStackTrace();
-				}
-			}).start();
-		}
 	}
 
 }

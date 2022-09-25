@@ -1,5 +1,6 @@
 package com.epapers.epapers.controller;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,6 +102,26 @@ public class EpaperController {
         } else {
             AppUtils.deleteFile(pdfDocument.getFile());
         }
+        return response;
+    }
+
+    @GetMapping("/file")
+    public ResponseEntity<ByteArrayResource> getFile(@RequestParam("name") String fileName) throws Exception{
+        File requestedFiled = new File(fileName);
+
+        if(!requestedFiled.exists() || !requestedFiled.getName().endsWith("pdf")) {
+            return ResponseEntity.notFound().build();
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(requestedFiled.toPath()));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + requestedFiled.getName());
+
+        ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(resource);
+
         return response;
     }
 }

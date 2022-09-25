@@ -46,10 +46,12 @@ public class EpapersBot extends TelegramLongPollingBot {
                 switch(userMessage) {
                     case "HTBNG":
                         Epaper htPdf = (Epaper) service.getHTpdf("102", EpapersApplication.getDate()).get("epaper");
+                        executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + htPdf.getFile().getName()));
                         executeAsync(new SendDocument(chatId, new InputFile(htPdf.getFile())));
                         break;
                     case "TOIBNG":
                         Epaper toiPdf = (Epaper) service.getTOIpdf("toibgc", EpapersApplication.getDate()).get("epaper");
+                        executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + toiPdf.getFile().getName()));
                         executeAsync(new SendDocument(chatId, new InputFile(toiPdf.getFile())));
                         break;
                     case "HT":
@@ -101,11 +103,13 @@ public class EpapersBot extends TelegramLongPollingBot {
                                     switch(publication) {
                                         case "HT":
                                             Epaper HTpdf = (Epaper) service.getHTpdf(editionId, EpapersApplication.getDate()).get("epaper");
+                                            executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + HTpdf.getFile().getName()));
                                             executeAsync(new SendDocument(chatId, new InputFile(HTpdf.getFile())));
                                             break;
                                         case "TOI":
                                             Epaper TOIpdf = (Epaper) service.getTOIpdf(editionId.toLowerCase(), EpapersApplication.getDate()).get("epaper");
                                             AppUtils.compressPDF(TOIpdf);
+                                            executeAsync(new SendMessage(chatId, "Access it using: https://epapers.onrender.com/file?name=" + TOIpdf.getFile().getName()));
                                             executeAsync(new SendDocument(chatId, new InputFile(TOIpdf.getFile())));
                                             break;
                                     }
