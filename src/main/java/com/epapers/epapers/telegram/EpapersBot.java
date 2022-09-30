@@ -11,6 +11,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.epapers.epapers.EpapersApplication;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.service.EpaperService;
+import com.epapers.epapers.util.AppUtils;
 
 
 public class EpapersBot extends TelegramLongPollingBot {
@@ -82,7 +83,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                                             break;
                                         case "TOI":
                                             Epaper TOIpdf = (Epaper) service.getTOIpdf(editionId.toLowerCase(), EpapersApplication.getDate()).get("epaper");
-                                            // AppUtils.compressPDF(TOIpdf);
+                                            AppUtils.compressPDF(TOIpdf);
                                             executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, TOIpdf.getFile().getName())));
                                             executeAsync(new SendDocument(chatId, new InputFile(TOIpdf.getFile())));
                                             break;
