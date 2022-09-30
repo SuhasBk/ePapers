@@ -14,7 +14,7 @@ function Home() {
     const [selectedEdition, setEdition] = useState("");
     const [dropDownTitle, setDropDownTitle] = useState("Select your city");
     
-    const navigator = useNavigate();
+    // const navigator = useNavigate();
 
     let choosePublication = (e) => {
         let publication = e.target.getAttribute("value");
@@ -59,19 +59,21 @@ function Home() {
             mainEdition: selectedEdition,
             date: selectedDate,
             publication: publication
-        }, { responseType: 'arraybuffer' })
-            .then(response => {
+        }, 
+        // { responseType: 'arraybuffer' }
+        ).then(response => {
                 document.getElementById("downloadButton").removeAttribute("disabled");
                 setSpinnerHidden(true);
-                var file = new Blob([response.data], { type: 'application/pdf' });
-                var fileURL = URL.createObjectURL(file);
-                if(IS_MOBILE) {
-                    var anchor = document.createElement('a');
-                    anchor.href = fileURL;
-                    anchor.click();
-                } else {
-                    navigator("/view", { state: { src: fileURL } });
-                }
+                window.location.href = `/api/file?name=${response.data}`;
+                // var file = new Blob([response.data], { type: 'application/pdf' });
+                // var fileURL = URL.createObjectURL(file);
+                // if(IS_MOBILE) {
+                //     var anchor = document.createElement('a');
+                //     anchor.href = fileURL;
+                //     anchor.click();
+                // } else {
+                //     navigator("/view", { state: { src: fileURL } });
+                // }
             }, err => {
                 document.getElementById("downloadButton").removeAttribute("disabled");
                 console.log(err);

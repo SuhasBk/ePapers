@@ -1,14 +1,12 @@
 package com.epapers.epapers.controller;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -70,7 +68,7 @@ public class EpaperController {
     }
 
     @PostMapping("/getPDF")
-    public ResponseEntity<ByteArrayResource> getPDF(@RequestBody Map<String, Object> payload) throws Exception {
+    public String getPDF(@RequestBody Map<String, Object> payload) throws Exception {
         Epaper pdfDocument = new Epaper();
         String emailId = (String) payload.get("userEmail");
         String mainEdition = (String) payload.get("mainEdition");
@@ -87,20 +85,18 @@ public class EpaperController {
             pdfDocument = (Epaper) service.getTOIpdf(mainEdition, date).get("epaper");
         }
 
-        ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(pdfDocument.getFile().toPath()));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfDocument.getFile().getName());
-
-        ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource);
-
+        // ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(pdfDocument.getFile().toPath()));
+        // HttpHeaders headers = new HttpHeaders();
+        // headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfDocument.getFile().getName());
+        // ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
+        //         .headers(headers)
+        //         .contentType(MediaType.APPLICATION_OCTET_STREAM)
+        //         .body(resource);
+        
         if (emailId != null && !emailId.isEmpty()) {
             service.mailPDF(emailId, mainEdition, date, publication);
         }
-        return response;
+        return pdfDocument.getFile().getName();
     }
 
     @GetMapping("/file")
