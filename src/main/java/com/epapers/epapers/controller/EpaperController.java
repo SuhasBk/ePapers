@@ -2,9 +2,12 @@ package com.epapers.epapers.controller;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -22,7 +25,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
+import com.epapers.epapers.model.EpapersUser;
 import com.epapers.epapers.service.EpaperService;
+import com.epapers.epapers.service.UserService;
 
 @RestController
 @RequestMapping("/api")
@@ -30,7 +35,10 @@ import com.epapers.epapers.service.EpaperService;
 public class EpaperController {
     
     @Autowired
-    EpaperService service;
+    EpaperService ePaperService;
+
+    @Autowired
+    UserService userService;
 
     @Autowired
     String TODAYS_DATE;
@@ -38,28 +46,28 @@ public class EpaperController {
     @GetMapping("/getEditionList")
     public List<Edition> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
         if(publication.equals("TOI")) {
-            return service.getTOIEditionList();
+            return ePaperService.getTOIEditionList();
         }
-        return service.getHTEditionList();
+        return ePaperService.getHTEditionList();
     }
 
     @GetMapping("/getTOIEditionList")
     public List<Edition> getTOIEditionList() throws Exception {
-        return service.getTOIEditionList();
+        return ePaperService.getTOIEditionList();
     }
 
     @GetMapping("/getHTSupplementEditions")
     public List<String> getHTSupplementEditions(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
-        return service.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
+        return ePaperService.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
     }
 
     @GetMapping("/getHTPages")
     public List<String> getPages(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
         List<String> pagesLinks = new ArrayList<>();
-        List<String> editions = service.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
+        List<String> editions = ePaperService.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
         editions.forEach(edition -> {
             try {
-                pagesLinks.addAll(service.getPages(edition, date.orElse(TODAYS_DATE)));
+                pagesLinks.addAll(ePaperService.getPages(edition, date.orElse(TODAYS_DATE)));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -68,21 +76,27 @@ public class EpaperController {
     }
 
     @PostMapping("/getPDF")
-    public String getPDF(@RequestBody Map<String, Object> payload) throws Exception {
+    public String getPDF(@RequestBody Map<String, Object> payload, HttpServletRequest request) throws Exception {
         Epaper pdfDocument = new Epaper();
         String emailId = (String) payload.get("userEmail");
         String mainEdition = (String) payload.get("mainEdition");
         String date = (String) Optional.ofNullable(payload.get("date")).orElse(TODAYS_DATE);
-        String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);       
+        String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);
+        String IP = request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
+
+        EpapersUser epapersUser = new EpapersUser(IP, null, mainEdition, mainEdition, TODAYS_DATE + new Date().getTime(), 1);
+        if (!userService.canAccess(epapersUser)) {
+            throw new ResponseStatusException(401,"Access denied ❌. Quota Exceeded.", null);
+        }
         
         if(publication == null) {
             throw new ResponseStatusException(400, "Missing 'publication' in payload", null);
         }
 
         if(publication.equals("HT")) {
-            pdfDocument = (Epaper) service.getHTpdf(mainEdition, date).get("epaper");
+            pdfDocument = (Epaper) ePaperService.getHTpdf(mainEdition, date).get("epaper");
         } else {
-            pdfDocument = (Epaper) service.getTOIpdf(mainEdition, date).get("epaper");
+            pdfDocument = (Epaper) ePaperService.getTOIpdf(mainEdition, date).get("epaper");
         }
 
         // ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(pdfDocument.getFile().toPath()));
@@ -94,7 +108,7 @@ public class EpaperController {
         //         .body(resource);
         
         if (emailId != null && !emailId.isEmpty()) {
-            service.mailPDF(emailId, mainEdition, date, publication);
+            ePaperService.mailPDF(emailId, mainEdition, date, publication);
         }
         return pdfDocument.getFile().getName();
     }
@@ -117,5 +131,11 @@ public class EpaperController {
                 .body(resource);
 
         return response;
+    }
+
+    @GetMapping("/epapers/refreshDB")
+    public String refreshDB() {
+        userService.refreshDB();
+        return "done";
     }
 }

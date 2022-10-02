@@ -12,21 +12,19 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.telegram.telegrambots.meta.TelegramBotsApi;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 import com.epapers.epapers.util.DesktopApp;
 
 import lombok.extern.slf4j.Slf4j;
 
 @SpringBootApplication
+@EnableMongoRepositories
 @EnableScheduling
 @Slf4j
 public class EpapersApplication {
@@ -51,14 +49,6 @@ public class EpapersApplication {
 			}
 		} else {
 			SpringApplication.run(EpapersApplication.class, args);
-			new Thread(() -> {
-				try {
-					TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-					botsApi.registerBot(new EpapersBot());
-				} catch (TelegramApiException e) {
-					e.printStackTrace();
-				}
-			}).start();
 		}
 	}
 
@@ -72,14 +62,14 @@ public class EpapersApplication {
 		}
 	}
 
-	@Scheduled(fixedRate = 1, timeUnit = TimeUnit.DAYS)
+	@Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
 	public void cleanUp() {
 		try {
 			File currDir = new File(".");
 			for(File file: currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
 				AppUtils.deleteFile(file);
-				System.out.println("Old files purged successfully!");
 			}
+			System.out.println("Old files purged successfully!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -94,16 +84,20 @@ public class EpapersApplication {
 		}
 	}
 
+	@Scheduled(cron = "0 0 * * * ?", zone = "Asia/Kolkata")
+	public void refreshDB() {
+		try {
+			new URL("https://epapers.onrender.com/api/epapers/refreshDB").openStream();
+			System.out.println("Starting a new day. 😊");
+		} catch (Exception e) {
+			System.out.println("Failed to refresh db.");
+		}
+	}
+
 	@Bean
 	public JavaMailSender getJavaMailSender() {
 		String username = System.getenv("EMAIL_ID");
 		String password = System.getenv("EMAIL_PASSWORD");
-
-		// if(username == null || password == null || username.isEmpty() ||
-		// password.isEmpty()) {
-		// throw new RuntimeException("Email credentials not configured. Failed to start
-		// HT.");
-		// }
 
 		JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
 		mailSender.setHost("smtp.gmail.com");

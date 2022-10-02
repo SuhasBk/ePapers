@@ -1,2 +1,8 @@
 server:
   port: 8000
+
+spring:
+  data:
+    mongodb:
+      uri: ${EPAPERS_MONGO_URI}
+      database: ePapers

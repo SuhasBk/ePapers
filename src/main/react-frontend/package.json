@@ -17,7 +17,8 @@
     "web-vitals": "^2.1.0"
   },
   "scripts": {
-    "backend": "cd ../../../ && mvn clean install && java -jar target/*.jar",
+    "build-backend": "cd ../../../ && mvn clean install",
+    "run-backend": "cd ../../../ && java -jar target/*.jar",    
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

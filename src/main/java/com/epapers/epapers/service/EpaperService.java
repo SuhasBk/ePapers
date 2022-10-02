@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
@@ -27,6 +28,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Transactional
 @Slf4j
 public class EpaperService {
 
@@ -77,16 +79,18 @@ public class EpaperService {
 
     public Epaper getPDF(List<String> links, String edition, String date) throws Exception {
         log.info("Starting downloads for edition: {}", edition);
+
+        // prepare the File object
         Epaper epaper = new Epaper(date.replaceAll("/", "_"), edition);
 
         File file = epaper.getFile();
 
         if(file.exists()) {
-            log.info("File already exists, skipping download from HT servers...");
+            log.info("File already exists, skipping download from servers...");
             return epaper;
         }
 
-//        ExecutorService executor = Executors.newFixedThreadPool(30);
+        // define what the executor should do and return
          ExecutorService executor = Executors.newCachedThreadPool();
         List<Callable<Image>> callableList = new ArrayList<>();
         List<Future<Image>> futureList;
@@ -106,8 +110,10 @@ public class EpaperService {
             return image;
         }));
 
+        // let executor handle stuff including exceptions
         futureList = executor.invokeAll(callableList);
 
+        // process returned results in synchronous manner
         try {
             futureList.forEach((img) -> {
                 try {
@@ -135,6 +141,7 @@ public class EpaperService {
         Map<String, Object> response = new HashMap<>();
         List<String> pagesLinks = new ArrayList<>();
         log.info("Called getHTpdf with edition: {} and date: {}", mainEdition, date);
+
         List<String> editions = getHTSupplementEditions(mainEdition, date);
         editions.forEach(edition -> {
             try {

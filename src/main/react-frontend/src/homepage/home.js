@@ -75,10 +75,11 @@ function Home() {
                 //     navigator("/view", { state: { src: fileURL } });
                 // }
             }, err => {
+                let errMessage = err.response.data?.message;
                 document.getElementById("downloadButton").removeAttribute("disabled");
-                console.log(err);
+                console.log(err.response);
                 setSpinnerHidden(true);
-                alert("Something went wrong! Try again later.");
+                alert(errMessage ? errMessage : "Something went wrong. Try again later.");
             });
     }
 
