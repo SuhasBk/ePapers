@@ -84,7 +84,7 @@ public class EpapersApplication {
 		}
 	}
 
-	@Scheduled(cron = "0 0 * * * ?", zone = "Asia/Kolkata")
+	@Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Kolkata")
 	public void refreshDB() {
 		try {
 			new URL("https://epapers.onrender.com/api/epapers/refreshDB").openStream();
