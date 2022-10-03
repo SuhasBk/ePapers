@@ -84,7 +84,7 @@ public class EpaperController {
         String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);
         String IP = request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
 
-        EpapersUser epapersUser = new EpapersUser(IP, null, mainEdition, mainEdition, TODAYS_DATE + new Date().getTime(), 1);
+        EpapersUser epapersUser = new EpapersUser(IP.split(",")[0], null, mainEdition, mainEdition, TODAYS_DATE + new Date().getTime(), 1);
         if (!userService.canAccess(epapersUser)) {
             throw new ResponseStatusException(401,"Access denied ❌. Quota Exceeded.", null);
         }
