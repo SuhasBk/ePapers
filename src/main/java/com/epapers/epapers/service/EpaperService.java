@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,7 @@ public class EpaperService {
         String url = "https://epaper.hindustantimes.com/Home/GetEditionList";
         List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
         json.forEach(edition -> {
-            Edition editionInfo = new Edition(edition.get("EditionId").toString(), edition.get("EditionDisplayName").toString());
+            Edition editionInfo = new Edition(Double.valueOf(edition.get("EditionId").toString()).intValue()+"", edition.get("EditionDisplayName").toString());
             editions.add(editionInfo);
         });
         log.info("Edition list: {}", editions);
@@ -64,6 +65,30 @@ public class EpaperService {
         String url = String.format(HT_BASE_URL + "/Home/GetAllSupplement?edid=%1$s&EditionDate=%2$s", mainEdition, date.replaceAll("/", "%2F"));
         List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
         json.forEach(edition -> editions.add(edition.get("EditionId").toString()));
+        return editions;
+    }
+
+    public Map<String, String> getEditionFromCity(String city) throws Exception {
+        Map<String, String> editions = new HashMap<>();
+
+        List<Edition> toiEditions = getTOIEditionList()
+                .stream()
+                .filter(edition -> edition.getEditionName().toUpperCase().contains(city))
+                .collect(Collectors.toList());
+        
+        if (toiEditions.size() > 0) {
+            editions.put("TOI", toiEditions.get(0).getEditionId());
+        }
+
+        List<Edition> htEditions = getHTEditionList()
+                .stream()
+                .filter(edition -> edition.getEditionName().toUpperCase().contains(city))
+                .collect(Collectors.toList());
+        
+        if (htEditions.size() > 0) {
+            editions.put("HT", htEditions.get(0).getEditionId());
+        }
+
         return editions;
     }
 
