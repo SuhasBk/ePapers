@@ -75,10 +75,11 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(cron = "0 9 * * * ?", zone = "Asia/Kolkata")
+    @Scheduled(cron = "0 0 9 * * ?", zone = "Asia/Kolkata")
     // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
         List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
+        log.info("Processing all subscriptions - {}", subscriptions);
         subscriptions.forEach(subscription -> {
             try {
                 String chatId = subscription.getChatId();
@@ -94,7 +95,8 @@ public class AppScheduler {
                 if(toiEdition != null) {
                     Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, TODAYS_DATE).get("epaper");
                     telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()));
-                }                
+                }
+                log.info("ePapers successfully sent to - {}", chatId);                
             } catch (Exception e) {
                 log.error("Subscription service failed. - {}", e);
             }
