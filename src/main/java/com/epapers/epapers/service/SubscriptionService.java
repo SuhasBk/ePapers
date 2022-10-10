@@ -25,6 +25,7 @@ public class SubscriptionService {
     public void removeSubscription(String chatId) {
         EpapersSubscription subscription = subscriptionRepository.findById(chatId).orElseThrow();
         subscriptionRepository.delete(subscription);
+        log.info("Unsubscribed successfully - {}", subscription);
     }
 
     public List<EpapersSubscription> getAllSubscriptions() {

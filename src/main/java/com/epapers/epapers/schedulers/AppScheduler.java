@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.epapers.epapers.EpapersApplication;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.EpapersSubscription;
 import com.epapers.epapers.service.EpaperService;
@@ -30,9 +31,6 @@ public class AppScheduler {
 
     @Autowired
     EpaperService epaperService;
-
-    @Autowired
-    String TODAYS_DATE;
 
     @Autowired
     EpapersBot telegramBot;
@@ -78,6 +76,7 @@ public class AppScheduler {
     @Scheduled(cron = "0 0 9 * * ?", zone = "Asia/Kolkata")
     // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
+        String TODAY = EpapersApplication.getTodaysDate();
         List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
         log.info("Processing all subscriptions - {}", subscriptions);
         subscriptions.forEach(subscription -> {
@@ -88,12 +87,12 @@ public class AppScheduler {
                 String htEdition = editions.get("HT");
                 
                 if(htEdition != null) {
-                    Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, TODAYS_DATE).get("epaper");
+                    Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, TODAY).get("epaper");
                     telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()));
                 }
 
                 if(toiEdition != null) {
-                    Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, TODAYS_DATE).get("epaper");
+                    Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, TODAY).get("epaper");
                     telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()));
                 }
                 log.info("ePapers successfully sent to - {}", chatId);                

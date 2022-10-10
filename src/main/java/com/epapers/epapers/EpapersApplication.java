@@ -23,8 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EpapersApplication {
 
-	@Bean
-	public static String getDate() {
+	public static String getTodaysDate() {
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 		String TODAYS_DATE = dtf.format(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
 		log.info("Today's date (default) is : {}", TODAYS_DATE);
@@ -57,7 +56,7 @@ public class EpapersApplication {
 		if (args.length != 0) {
 			if (args[0].equals("HT") || args[0].equals("TOI")) {
 				try {
-					DesktopApp.download(args[0], getDate());
+					DesktopApp.download(args[0], getTodaysDate());
 				} catch (Exception e) {
 					log.error("Something went wrong...", e);
 				}
