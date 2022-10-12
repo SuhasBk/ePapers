@@ -35,7 +35,7 @@ public class AppScheduler {
     @Autowired
     EpapersBot telegramBot;
 
-    @Scheduled(fixedRate = 15, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
         try {
             new URL("https://epapers.onrender.com/").openStream();
