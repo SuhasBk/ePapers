@@ -35,7 +35,7 @@ public class AppScheduler {
     @Autowired
     EpapersBot telegramBot;
 
-    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
         try {
             new URL("https://epapers.onrender.com/").openStream();
@@ -45,7 +45,7 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
+    @Scheduled(fixedDelay = 1, initialDelay = 1, timeUnit = TimeUnit.HOURS)
     public void cleanUp() {
         try {
             File currDir = new File(".");
@@ -58,7 +58,7 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void GC() {
         System.gc();
     }
