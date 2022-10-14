@@ -156,7 +156,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                                 }
                             }
                         } else {
-                            executeAsync(new SendMessage(chatId, "Hello there!\n\n👉 Enter publication: HT or TOI.\n\n👉 Enter 'download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter 'subscribe' to get ePapers daily at 9:00 A.M."));
+                            executeAsync(new SendMessage(chatId, "Hello there!\n\n👉 Enter publication: HT or TOI.\n\n👉 Enter 'download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter 'subscribe' to get ePapers daily at 8:00 A.M."));
                         }
                 }
             } catch (Exception e) {

@@ -73,7 +73,7 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(cron = "0 0 9 * * ?", zone = "Asia/Kolkata")
+    @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
     // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
         String TODAY = EpapersApplication.getTodaysDate();
