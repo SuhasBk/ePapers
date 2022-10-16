@@ -14,13 +14,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import com.epapers.epapers.EpapersApplication;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.EpapersSubscription;
 import com.epapers.epapers.model.EpapersUser;
 import com.epapers.epapers.service.EpaperService;
 import com.epapers.epapers.service.SubscriptionService;
 import com.epapers.epapers.service.UserService;
+import com.epapers.epapers.util.AppUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -73,13 +73,13 @@ public class EpapersBot extends TelegramLongPollingBot {
                 switch(userMessage) {
                     case "HTBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
-                        Epaper htPdf = (Epaper) ePaperService.getHTpdf("102", EpapersApplication.getTodaysDate()).get("epaper");
+                        Epaper htPdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get("epaper");
                         executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(htPdf.getFile())));
                         break;
                     case "TOIBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing TOI ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
-                        Epaper toiPdf = (Epaper) ePaperService.getTOIpdf("toibgc", EpapersApplication.getTodaysDate()).get("epaper");
+                        Epaper toiPdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate()).get("epaper");
                         executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(toiPdf.getFile())));
                         break;
@@ -110,7 +110,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                                 String city = (metaData[0].toLowerCase().equals("bengaluru")) ? BENGALURU_CITY_KANNADA : metaData[0];
                                 String editionId = metaData[1];
                                 String publication = metaData[2];
-                                EpapersUser epapersUser = new EpapersUser(chatId, user, editionId, city, EpapersApplication.getTodaysDate() + "_" + new Date().getTime(), 1);
+                                EpapersUser epapersUser = new EpapersUser(chatId, user, editionId, city, AppUtils.getTodaysDate() + "_" + new Date().getTime(), 1);
                                 if(!userService.canAccess(epapersUser)) {
                                     executeAsync(new SendMessage(chatId, "Access denied ❌. Quota Exceeded."));
                                     return;
@@ -120,12 +120,12 @@ public class EpapersBot extends TelegramLongPollingBot {
                                 try{
                                     switch(publication) {
                                         case "HT":
-                                            Epaper HTpdf = (Epaper) ePaperService.getHTpdf(editionId, EpapersApplication.getTodaysDate()).get("epaper");
+                                            Epaper HTpdf = (Epaper) ePaperService.getHTpdf(editionId, AppUtils.getTodaysDate()).get("epaper");
                                             executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, HTpdf.getFile().getName())));
                                             executeAsync(new SendDocument(chatId, new InputFile(HTpdf.getFile())));
                                             break;
                                         case "TOI":
-                                            Epaper TOIpdf = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), EpapersApplication.getTodaysDate()).get("epaper");
+                                            Epaper TOIpdf = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), AppUtils.getTodaysDate()).get("epaper");
                                             executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, TOIpdf.getFile().getName())));
                                             File file = TOIpdf.getFile();
                                             if(file.length() / (1024*1024) < 40) {

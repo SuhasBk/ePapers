@@ -10,6 +10,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +42,13 @@ import lombok.extern.slf4j.Slf4j;
 public class AppUtils {
 
     private static final Gson gson = new Gson();
+
+    public static String getTodaysDate() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String TODAYS_DATE = dtf.format(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
+        log.info("Today's date (default) is : {}", TODAYS_DATE);
+        return TODAYS_DATE;
+    }
 
     public static java.util.List<Map<String, Object>> getHTJsonObject(String urlString) {
         java.util.List<Map<String, Object>> response = new ArrayList<>();

@@ -23,12 +23,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.epapers.epapers.EpapersApplication;
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.EpapersUser;
 import com.epapers.epapers.service.EpaperService;
 import com.epapers.epapers.service.UserService;
+import com.epapers.epapers.util.AppUtils;
 
 @RestController
 @RequestMapping("/api")
@@ -56,14 +56,14 @@ public class EpaperController {
 
     @GetMapping("/getHTSupplementEditions")
     public List<String> getHTSupplementEditions(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
-        String TODAYS_DATE = EpapersApplication.getTodaysDate();
+        String TODAYS_DATE = AppUtils.getTodaysDate();
         return ePaperService.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
     }
 
     @GetMapping("/getHTPages")
     public List<String> getPages(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
         List<String> pagesLinks = new ArrayList<>();
-        String TODAYS_DATE = EpapersApplication.getTodaysDate();
+        String TODAYS_DATE = AppUtils.getTodaysDate();
         List<String> editions = ePaperService.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
         editions.forEach(edition -> {
             try {
@@ -77,7 +77,7 @@ public class EpaperController {
 
     @PostMapping("/getPDF")
     public String getPDF(@RequestBody Map<String, Object> payload, HttpServletRequest request) throws Exception {
-        String TODAYS_DATE = EpapersApplication.getTodaysDate();
+        String TODAYS_DATE = AppUtils.getTodaysDate();
         Epaper pdfDocument = new Epaper();
         String emailId = (String) payload.get("userEmail");
         String mainEdition = (String) payload.get("mainEdition");

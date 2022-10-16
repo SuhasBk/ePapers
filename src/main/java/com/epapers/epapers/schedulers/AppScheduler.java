@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.epapers.epapers.EpapersApplication;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.EpapersSubscription;
 import com.epapers.epapers.service.EpaperService;
@@ -76,7 +75,7 @@ public class AppScheduler {
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
     // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
-        String TODAY = EpapersApplication.getTodaysDate();
+        String TODAY = AppUtils.getTodaysDate();
         List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
         log.info("Processing all subscriptions - {}", subscriptions);
         subscriptions.forEach(subscription -> {
