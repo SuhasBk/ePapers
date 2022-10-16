@@ -5,6 +5,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Files;
@@ -41,13 +42,17 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings("unchecked")
 public class AppUtils {
 
+    private AppUtils() {}
+
     private static final Gson gson = new Gson();
+
+    public static final String TOI_EDITIONS = "[ { \"editionName\": \"Ahmedabad\", \"editionId\": \"toiac\" }, { \"editionName\": \"Bengaluru\", \"editionId\": \"toibgc\" }, { \"editionName\": \"Bhopal\", \"editionId\": \"toibhoc\" }, { \"editionName\": \"Chandigarh\", \"editionId\": \"toicgct\" }, { \"editionName\": \"Chennai\", \"editionId\": \"toich\" }, { \"editionName\": \"Delhi\", \"editionId\": \"cap\" }, { \"editionName\": \"Goa\", \"editionId\": \"toigo\" }, { \"editionName\": \"Hyderabad\", \"editionId\": \"toih\" }, { \"editionName\": \"Jaipur\", \"editionId\": \"toijc\" }, { \"editionName\": \"Kochi\", \"editionId\": \"toikrko\" }, { \"editionName\": \"Kolkata\", \"editionId\": \"toikc\" }, { \"editionName\": \"Lucknow\", \"editionId\": \"toilc\" }, { \"editionName\": \"Mumbai\", \"editionId\": \"toim\" }, { \"editionName\": \"Pune\", \"editionId\": \"toipuc\" } ]";
 
     public static String getTodaysDate() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        String TODAYS_DATE = dtf.format(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
-        log.info("Today's date (default) is : {}", TODAYS_DATE);
-        return TODAYS_DATE;
+        String todaysDate = dtf.format(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
+        log.info("Today's date (default) is : {}", todaysDate);
+        return todaysDate;
     }
 
     public static java.util.List<Map<String, Object>> getHTJsonObject(String urlString) {
@@ -78,65 +83,61 @@ public class AppUtils {
         }
         return response;
     }
-    
-    public static String getTOIEditions() {
-        String toiEditions = "[ { \"editionName\": \"Ahmedabad\", \"editionId\": \"toiac\" }, { \"editionName\": \"Bengaluru\", \"editionId\": \"toibgc\" }, { \"editionName\": \"Bhopal\", \"editionId\": \"toibhoc\" }, { \"editionName\": \"Chandigarh\", \"editionId\": \"toicgct\" }, { \"editionName\": \"Chennai\", \"editionId\": \"toich\" }, { \"editionName\": \"Delhi\", \"editionId\": \"cap\" }, { \"editionName\": \"Goa\", \"editionId\": \"toigo\" }, { \"editionName\": \"Hyderabad\", \"editionId\": \"toih\" }, { \"editionName\": \"Jaipur\", \"editionId\": \"toijc\" }, { \"editionName\": \"Kochi\", \"editionId\": \"toikrko\" }, { \"editionName\": \"Kolkata\", \"editionId\": \"toikc\" }, { \"editionName\": \"Lucknow\", \"editionId\": \"toilc\" }, { \"editionName\": \"Mumbai\", \"editionId\": \"toim\" }, { \"editionName\": \"Pune\", \"editionId\": \"toipuc\" } ]";
-        return toiEditions;
-    }
 
     public static void compressPDF(Epaper epaper) throws Exception {
         String src = epaper.getFile().getAbsolutePath();
         String dest = src.replace(".pdf", "_tmp.pdf");
         float resizeFactor = 1.0f;
-        PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest));
-        int pages = pdfDoc.getNumberOfPages();
+        try (PdfDocument pdfDoc = new PdfDocument(new PdfReader(src), new PdfWriter(dest))) {
+            int pages = pdfDoc.getNumberOfPages();
 
-        // Iterate over all pages to get all images.
-        for (int i = 1; i <= pages; i++)
-        {
-            PdfPage page = pdfDoc.getPage(i);
-            PdfDictionary pageDict = page.getPdfObject();
-            PdfDictionary resources = pageDict.getAsDictionary(PdfName.Resources);
-            // Get images
-            PdfDictionary xObjects = resources.getAsDictionary(PdfName.XObject);
-            for (PdfName imgRef : xObjects.keySet()) {
-                // Get image
-                PdfStream stream = xObjects.getAsStream(imgRef);
-                PdfImageXObject image = new PdfImageXObject(stream);
-                BufferedImage bi = image.getBufferedImage();
-                if (bi == null)
-                    continue;
+            // Iterate over all pages to get all images.
+            for (int i = 1; i <= pages; i++) {
+                PdfPage page = pdfDoc.getPage(i);
+                PdfDictionary pageDict = page.getPdfObject();
+                PdfDictionary resources = pageDict.getAsDictionary(PdfName.Resources);
+                // Get images
+                PdfDictionary xObjects = resources.getAsDictionary(PdfName.XObject);
+                for (PdfName imgRef : xObjects.keySet()) {
+                    // Get image
+                    PdfStream stream = xObjects.getAsStream(imgRef);
+                    PdfImageXObject image = new PdfImageXObject(stream);
+                    BufferedImage bi = image.getBufferedImage();
+                    if (bi == null)
+                        continue;
 
-                // Create new image
-                int width = (int) (bi.getWidth() * resizeFactor);
-                int height = (int) (bi.getHeight() * resizeFactor);
-                BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-                AffineTransform at = AffineTransform.getScaleInstance(resizeFactor, resizeFactor);
-                Graphics2D g = img.createGraphics();
-                g.drawRenderedImage(bi, at);
-                ByteArrayOutputStream imgBytes = new ByteArrayOutputStream();
+                    // Create new image
+                    int width = (int) (bi.getWidth() * resizeFactor);
+                    int height = (int) (bi.getHeight() * resizeFactor);
+                    BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                    AffineTransform at = AffineTransform.getScaleInstance(resizeFactor, resizeFactor);
+                    Graphics2D g = img.createGraphics();
+                    g.drawRenderedImage(bi, at);
+                    ByteArrayOutputStream imgBytes = new ByteArrayOutputStream();
 
-                // Write new image
-                ImageIO.write(img, "JPG", imgBytes);
-                com.itextpdf.layout.element.Image imgNew = new com.itextpdf.layout.element.Image(ImageDataFactory.create(imgBytes.toByteArray()));
+                    // Write new image
+                    ImageIO.write(img, "JPG", imgBytes);
+                    com.itextpdf.layout.element.Image imgNew = new com.itextpdf.layout.element.Image(
+                            ImageDataFactory.create(imgBytes.toByteArray()));
 
-                // Replace the original image with the resized image
-                xObjects.put(imgRef, imgNew.getXObject().getPdfObject());
+                    // Replace the original image with the resized image
+                    xObjects.put(imgRef, imgNew.getXObject().getPdfObject());
+                }
+                log.info("Compressed {} of {} pages", i, pages);
             }
-            log.info("Compressed {} of {} pages", i, pages);
         }
-
-        pdfDoc.close();
+        
         deleteFile(epaper.getFile());
         Path source = Paths.get(dest);
         Files.move(source, source.resolveSibling(src));
         File newFile = new File(src);
         epaper.setFile(newFile);
-        System.gc();
     }
 
     public static void deleteFile(File file) {
-        if(!file.delete()) {
+        try {
+            Files.delete(file.toPath());
+        } catch(IOException e) {
             log.error("Oops! Failed to delete tmp file: {}", file.getAbsolutePath());
         }
     }

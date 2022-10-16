@@ -50,24 +50,23 @@ public class EpaperController {
     }
 
     @GetMapping("/getTOIEditionList")
-    public List<Edition> getTOIEditionList() throws Exception {
+    public List<Edition> getTOIEditionList() {
         return ePaperService.getTOIEditionList();
     }
 
     @GetMapping("/getHTSupplementEditions")
     public List<String> getHTSupplementEditions(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
-        String TODAYS_DATE = AppUtils.getTodaysDate();
-        return ePaperService.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
+        return ePaperService.getHTSupplementEditions(mainEdition, date.orElse(AppUtils.getTodaysDate()));
     }
 
     @GetMapping("/getHTPages")
     public List<String> getPages(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
         List<String> pagesLinks = new ArrayList<>();
-        String TODAYS_DATE = AppUtils.getTodaysDate();
-        List<String> editions = ePaperService.getHTSupplementEditions(mainEdition, date.orElse(TODAYS_DATE));
+        String todayDate = AppUtils.getTodaysDate();
+        List<String> editions = ePaperService.getHTSupplementEditions(mainEdition, date.orElse(todayDate));
         editions.forEach(edition -> {
             try {
-                pagesLinks.addAll(ePaperService.getPages(edition, date.orElse(TODAYS_DATE)));
+                pagesLinks.addAll(ePaperService.getPages(edition, date.orElse(todayDate)));
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -77,15 +76,15 @@ public class EpaperController {
 
     @PostMapping("/getPDF")
     public String getPDF(@RequestBody Map<String, Object> payload, HttpServletRequest request) throws Exception {
-        String TODAYS_DATE = AppUtils.getTodaysDate();
-        Epaper pdfDocument = new Epaper();
+        String todaysDate = AppUtils.getTodaysDate();
+        Epaper pdfDocument;
         String emailId = (String) payload.get("userEmail");
         String mainEdition = (String) payload.get("mainEdition");
-        String date = (String) Optional.ofNullable(payload.get("date")).orElse(TODAYS_DATE);
+        String date = (String) Optional.ofNullable(payload.get("date")).orElse(todaysDate);
         String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);
-        String IP = request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
+        String ipAddress = request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
 
-        EpapersUser epapersUser = new EpapersUser(IP.split(",")[0], null, mainEdition, mainEdition, TODAYS_DATE + new Date().getTime(), 1);
+        EpapersUser epapersUser = new EpapersUser(ipAddress.split(",")[0], null, mainEdition, mainEdition, todaysDate + new Date().getTime(), 1);
         if (!userService.canAccess(epapersUser)) {
             throw new ResponseStatusException(401,"Access denied ❌. Quota Exceeded.", null);
         }
@@ -100,13 +99,13 @@ public class EpaperController {
             pdfDocument = (Epaper) ePaperService.getTOIpdf(mainEdition, date).get("epaper");
         }
 
-        // ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(pdfDocument.getFile().toPath()));
-        // HttpHeaders headers = new HttpHeaders();
-        // headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfDocument.getFile().getName());
-        // ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
-        //         .headers(headers)
-        //         .contentType(MediaType.APPLICATION_OCTET_STREAM)
-        //         .body(resource);
+        /* ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(pdfDocument.getFile().toPath()));
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfDocument.getFile().getName());
+        ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource); */
         
         if (emailId != null && !emailId.isEmpty()) {
             ePaperService.mailPDF(emailId, mainEdition, date, publication);
@@ -115,7 +114,7 @@ public class EpaperController {
     }
 
     @GetMapping("/file")
-    public ResponseEntity<FileSystemResource> getFile(@RequestParam("name") String fileName) throws Exception{
+    public ResponseEntity<FileSystemResource> getFile(@RequestParam("name") String fileName) {
         File requestedFile = new File(fileName);
 
         if (!requestedFile.exists() || !requestedFile.getName().endsWith("pdf")) {
@@ -126,12 +125,10 @@ public class EpaperController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + requestedFile.getName());
 
-        ResponseEntity<FileSystemResource> response = ResponseEntity.ok()
+        return ResponseEntity.ok()
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
-
-        return response;
     }
 
     @GetMapping("/epapers/refreshDB")

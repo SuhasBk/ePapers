@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AppScheduler {
 
-    public static String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
+    private static final String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
 
     @Autowired
     SubscriptionService subscriptionService;
@@ -58,7 +58,7 @@ public class AppScheduler {
     }
 
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
-    public void GC() {
+    public void collectGarbage() {
         System.gc();
     }
 
@@ -75,7 +75,7 @@ public class AppScheduler {
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
     // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
-        String TODAY = AppUtils.getTodaysDate();
+        String today = AppUtils.getTodaysDate();
         List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
         log.info("Processing all subscriptions - {}", subscriptions);
         subscriptions.forEach(subscription -> {
@@ -86,12 +86,12 @@ public class AppScheduler {
                 String htEdition = editions.get("HT");
                 
                 if(htEdition != null) {
-                    Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, TODAY).get("epaper");
+                    Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
                     telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()));
                 }
 
                 if(toiEdition != null) {
-                    Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, TODAY).get("epaper");
+                    Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, today).get("epaper");
                     telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()));
                 }
                 log.info("ePapers successfully sent to - {}", chatId);                

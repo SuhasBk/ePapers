@@ -37,11 +37,12 @@ public class EpapersBot extends TelegramLongPollingBot {
     @Autowired
     SubscriptionService subscriptionService;
 
-    public static String BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
-    public static String BOT_USERNAME = "ePapers";
-    public static String POLL_ANSWER;
-    public static String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
-    public static String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
+    private static final String BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
+    private static final String BOT_USERNAME = "ePapers";
+    private static final String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
+    private static final String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
+    private static final String EPAPER_STRING = "epaper";
+    private static final String ACCESS_STRING = "Access it using: ";
 
     @Override
     public String getBotUsername() {
@@ -61,6 +62,14 @@ public class EpapersBot extends TelegramLongPollingBot {
         }
     }
 
+    public void handleErrors(String chatId, String feedback) {
+        try {
+            executeAsync(new SendMessage(chatId, feedback));
+        } catch (TelegramApiException e1) {
+            log.error("TELEGRAM-SERVICE: Failed to send feedback");
+        }
+    }
+
     @Override
     public void onUpdateReceived(Update update) {
         if(update.hasMessage() && !update.getMessage().getText().isEmpty()) {
@@ -73,15 +82,15 @@ public class EpapersBot extends TelegramLongPollingBot {
                 switch(userMessage) {
                     case "HTBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
-                        Epaper htPdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get("epaper");
-                        executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName())));
-                        executeAsync(new SendDocument(chatId, new InputFile(htPdf.getFile())));
+                        Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htpdf.getFile().getName())));
+                        executeAsync(new SendDocument(chatId, new InputFile(htpdf.getFile())));
                         break;
                     case "TOIBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing TOI ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
-                        Epaper toiPdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate()).get("epaper");
-                        executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName())));
-                        executeAsync(new SendDocument(chatId, new InputFile(toiPdf.getFile())));
+                        Epaper toipdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toipdf.getFile().getName())));
+                        executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
                         break;
                     case "HT":
                         editions.append("💡 Copy the WHOLE text for your city and type: 'download <copied_text>'\n\n");
@@ -103,68 +112,71 @@ public class EpapersBot extends TelegramLongPollingBot {
                         subscriptionService.removeSubscription(chatId);
                         break;
                     default:
-                        if(userMessage.startsWith("DOWNLOAD ")) {
-                            String payload = userMessage.trim().split(" ")[1];
-                            String[] metaData = payload.split("_");
-                            if(metaData.length == 3) {
-                                String city = (metaData[0].toLowerCase().equals("bengaluru")) ? BENGALURU_CITY_KANNADA : metaData[0];
-                                String editionId = metaData[1];
-                                String publication = metaData[2];
-                                EpapersUser epapersUser = new EpapersUser(chatId, user, editionId, city, AppUtils.getTodaysDate() + "_" + new Date().getTime(), 1);
-                                if(!userService.canAccess(epapersUser)) {
-                                    executeAsync(new SendMessage(chatId, "Access denied ❌. Quota Exceeded."));
-                                    return;
-                                }
-                                executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing " + publication + " ePaper for : " + city + " 🎉"));
-                                
-                                try{
-                                    switch(publication) {
-                                        case "HT":
-                                            Epaper HTpdf = (Epaper) ePaperService.getHTpdf(editionId, AppUtils.getTodaysDate()).get("epaper");
-                                            executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, HTpdf.getFile().getName())));
-                                            executeAsync(new SendDocument(chatId, new InputFile(HTpdf.getFile())));
-                                            break;
-                                        case "TOI":
-                                            Epaper TOIpdf = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), AppUtils.getTodaysDate()).get("epaper");
-                                            executeAsync(new SendMessage(chatId, "Access it using: " + String.format(FILE_ACCESS_URL, TOIpdf.getFile().getName())));
-                                            File file = TOIpdf.getFile();
-                                            if(file.length() / (1024*1024) < 40) {
-                                                executeAsync(new SendDocument(chatId, new InputFile(file)));
-                                            }
-                                            break;
-                                    }
-                                } catch(Exception e) {
-                                    e.printStackTrace();
-                                    try {
-                                        executeAsync(new SendMessage(chatId, "Something went wrong while downloading ePaper. 😢\n\n Try downloading it directly from https://epapers.onrender.com"));
-                                    } catch (TelegramApiException e1) {
-                                        e1.printStackTrace();
-                                    }
-                                }
-                            }
-                        } else if(userMessage.startsWith("SUBSCRIBE ")) {
-                            String[] metaData = userMessage.split(" ");
-                            if(metaData.length == 2) {
-                                String city = metaData[1];
-                                Map<String, String> subscribedEditions = ePaperService.getEditionFromCity(city);
-                                if(subscribedEditions.size() > 0) {
-                                    EpapersSubscription subscription = new EpapersSubscription(chatId, user, subscribedEditions);
-                                    subscriptionService.addSubscription(subscription);
-                                    executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend 'unsubscribe' any time you wish."));
-                                } else {
-                                    executeAsync(new SendMessage(chatId, "Could not find your city 🤔. To see a list of available cities, enter 'HT' or 'TOI'."));
-                                }
-                            }
+                        if (userMessage.startsWith("DOWNLOAD ")) {
+                            sendPDF(chatId, user, userMessage);
+                        } else if (userMessage.startsWith("SUBSCRIBE ")) {
+                            subscribeNewUser(chatId, user, userMessage);
                         } else {
-                            executeAsync(new SendMessage(chatId, "Hello there!\n\n👉 Enter publication: HT or TOI.\n\n👉 Enter 'download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter 'subscribe' to get ePapers daily at 8:00 A.M."));
+                            executeAsync(new SendMessage(chatId,"Hello there!\n\n👉 Enter publication: HT or TOI.\n\n👉 Enter 'download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter 'subscribe' to get ePapers daily at 8:00 A.M."));
                         }
                 }
             } catch (Exception e) {
-                log.error("TELEGRAM-SERVICE: Oof. Errors bruh - {}", e);
-                try {
-                    executeAsync(new SendMessage(chatId, "Could not process that request."));
-                } catch (TelegramApiException e1) {}
+                e.printStackTrace();
+                handleErrors(chatId, "Could not process that request.");
             }
         }
-    }  
+    }
+
+    public void sendPDF(String chatId, User user, String userMessage) throws Exception {
+        String payload = userMessage.trim().split(" ")[1];
+        String[] metaData = payload.split("_");
+        if(metaData.length == 3) {
+            String city = (metaData[0].equalsIgnoreCase("bengaluru")) ? BENGALURU_CITY_KANNADA : metaData[0];
+            String editionId = metaData[1];
+            String publication = metaData[2];
+            EpapersUser epapersUser = new EpapersUser(chatId, user, editionId, city, AppUtils.getTodaysDate() + "_" + new Date().getTime(), 1);
+            if(!userService.canAccess(epapersUser)) {
+                executeAsync(new SendMessage(chatId, "Access denied ❌. Quota Exceeded."));
+                return;
+            }
+            executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing " + publication + " ePaper for : " + city + " 🎉"));
+            
+            try{
+                switch(publication) {
+                    case "HT":
+                        Epaper htPDF = (Epaper) ePaperService.getHTpdf(editionId, AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htPDF.getFile().getName())));
+                        executeAsync(new SendDocument(chatId, new InputFile(htPDF.getFile())));
+                        break;
+                    case "TOI":
+                        Epaper toiPDF = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toiPDF.getFile().getName())));
+                        File file = toiPDF.getFile();
+                        if(file.length() / (1024*1024) < 40) {
+                            executeAsync(new SendDocument(chatId, new InputFile(file)));
+                        }
+                        break;
+                    default: break;
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+                handleErrors(chatId, "Something went wrong while downloading ePaper. 😢\n\n Try downloading it directly from https://epapers.onrender.com");
+            }
+        }
+    }
+
+    public void subscribeNewUser(String chatId, User user, String userMessage) throws Exception {
+        String[] metaData = userMessage.split(" ");
+        if (metaData.length == 2) {
+            String city = metaData[1];
+            Map<String, String> subscribedEditions = ePaperService.getEditionFromCity(city);
+            if (!subscribedEditions.isEmpty()) {
+                EpapersSubscription subscription = new EpapersSubscription(chatId, user, subscribedEditions);
+                subscriptionService.addSubscription(subscription);
+                executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend 'unsubscribe' any time you wish."));
+            } else {
+                executeAsync(new SendMessage(chatId,"Could not find your city 🤔. To see a list of available cities, enter 'HT' or 'TOI'."));
+            }
+        }
+    }
 }

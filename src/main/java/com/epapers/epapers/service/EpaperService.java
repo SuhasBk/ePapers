@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -21,8 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.util.AppUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
 
@@ -36,15 +39,15 @@ public class EpaperService {
     @Autowired
     EmailService emailService;
 
-    private final String HT_BASE_URL = "https://epaper.hindustantimes.com";
-    private final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
-
-    private final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
+    private static final String HT_BASE_URL = "https://epaper.hindustantimes.com";
+    private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
+    private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
+    private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
+    private static final String EPAPER_STRING = "epaper";
 
     public List<Edition> getHTEditionList() throws Exception {
         List<Edition> editions = new ArrayList<>();
-        String url = "https://epaper.hindustantimes.com/Home/GetEditionList";
-        List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
+        List<Map<String, Object>> json = AppUtils.getHTJsonObject(HT_EDITIONS_URL);
         json.forEach(edition -> {
             Edition editionInfo = new Edition(Double.valueOf(edition.get("EditionId").toString()).intValue()+"", edition.get("EditionDisplayName").toString());
             editions.add(editionInfo);
@@ -53,16 +56,22 @@ public class EpaperService {
         return editions;
     }
 
-    public List<Edition> getTOIEditionList() throws Exception {
+    public List<Edition> getTOIEditionList() {
         ObjectMapper objectMapper = new ObjectMapper();
-        String editions = AppUtils.getTOIEditions();
-        return Arrays.asList(objectMapper.readValue(editions, Edition[].class));
+        String editions = AppUtils.TOI_EDITIONS;
+        List<Edition> toiEditions = null;
+        try {
+            toiEditions = Arrays.asList(objectMapper.readValue(editions, Edition[].class));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
+        return toiEditions;
     }
 
     public List<String> getHTSupplementEditions(String mainEdition, String date) {
         List<String> editions = new ArrayList<>();
         log.info("Called getHTSupplementEditions with edition: {} and date: {}", mainEdition, date);
-        String url = String.format(HT_BASE_URL + "/Home/GetAllSupplement?edid=%1$s&EditionDate=%2$s", mainEdition, date.replaceAll("/", "%2F"));
+        String url = String.format("%1$s/Home/GetAllSupplement?edid=%2$s&EditionDate=%3$s", HT_BASE_URL, mainEdition, date.replace("/", "%2F"));
         List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
         json.forEach(edition -> editions.add(edition.get("EditionId").toString()));
         return editions;
@@ -76,7 +85,7 @@ public class EpaperService {
                 .filter(edition -> edition.getEditionName().toUpperCase().contains(city))
                 .collect(Collectors.toList());
         
-        if (toiEditions.size() > 0) {
+        if (!toiEditions.isEmpty()) {
             editions.put("TOI", toiEditions.get(0).getEditionId());
         }
 
@@ -85,7 +94,7 @@ public class EpaperService {
                 .filter(edition -> edition.getEditionName().toUpperCase().contains(city))
                 .collect(Collectors.toList());
         
-        if (htEditions.size() > 0) {
+        if (!htEditions.isEmpty()) {
             editions.put("HT", htEditions.get(0).getEditionId());
         }
 
@@ -95,10 +104,9 @@ public class EpaperService {
     public List<String> getPages(String edition, String date) {
         List<String> links = new ArrayList<>();
         log.info("Called getPages with edition: {} and date: {}", edition, date);
-        String url = String.format(HT_BASE_URL + "/Home/GetAllpages?editionid=%1$s&editiondate=%2$s", edition,
-                date.replaceAll("/", "%2F"));
+        String url = String.format("%1$s/Home/GetAllpages?editionid=%2$s&editiondate=%3$s", HT_BASE_URL, edition, date.replace("/", "%2F"));
         List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
-        json.forEach(page -> links.add(page.get("HighResolution").toString().replaceAll("_mr", "")));
+        json.forEach(page -> links.add(page.get("HighResolution").toString().replace("_mr", "")));
         return links;
     }
 
@@ -106,7 +114,7 @@ public class EpaperService {
         log.info("Starting downloads for edition: {}", edition);
 
         // prepare the File object
-        Epaper epaper = new Epaper(date.replaceAll("/", "_"), edition);
+        Epaper epaper = new Epaper(date.replace("/", "_"), edition);
 
         File file = epaper.getFile();
 
@@ -140,12 +148,14 @@ public class EpaperService {
 
         // process returned results in synchronous manner
         try {
-            futureList.forEach((img) -> {
+            futureList.forEach(img -> {
                 try {
                     document.add(img.get());
                     log.info("Downloaded: {} of {}", futureList.indexOf(img) + 1, futureList.size());
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } catch (DocumentException | ExecutionException e) {
+                    log.error("Error in fetching image - ", e);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             });
         } catch(Exception e) {
@@ -153,10 +163,9 @@ public class EpaperService {
         } finally {
             document.close();
             log.info("Finished collecting pages: {}\n", document);
-            if(executor.shutdownNow().size() > 0) {
+            if(!executor.shutdownNow().isEmpty()) {
                 log.error("Some pages might not be added to PDF! :(");
             }
-            System.gc();
         }
 
         return epaper;
@@ -177,7 +186,7 @@ public class EpaperService {
         });
 
         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-        response.put("epaper", epaper);
+        response.put(EPAPER_STRING, epaper);
         return response;
     }
 
@@ -188,10 +197,10 @@ public class EpaperService {
         log.info("Called getTOIpdf with edition: {} and date: {}", mainEdition, date);
 
         String[] dateSplit = date.split("/");
-        String DAY = dateSplit[0];
-        String MONTH = dateSplit[1];
-        String YEAR = dateSplit[2];
-        String metaUrl = String.format(TOI_META_URL, mainEdition, YEAR, MONTH, DAY, date.replaceAll("/","_"), mainEdition);
+        String day = dateSplit[0];
+        String month = dateSplit[1];
+        String year = dateSplit[2];
+        String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
 
         Map<String, Object> meta = AppUtils.getTOIJsonObject(metaUrl);
         List<Object> metaData = Arrays.asList(meta.get("DayIndex"));
@@ -199,12 +208,12 @@ public class EpaperService {
 
         data.forEach(page -> {
             Map<String, String> pageData = (Map<String, String>) page;
-            String PAGE_URL = String.format(TOI_BASE_URL + "%s/%s/%s/%s/Page/%s_%s_%s.jpg", mainEdition, YEAR, MONTH, DAY, date.replaceAll("/", "_"), pageData.get("DisplayPageNumber"), mainEdition);
-            pagesLinks.add(PAGE_URL);
+            String pageUrl = String.format("%s%s/%s/%s/%s/Page/%s_%s_%s.jpg", TOI_BASE_URL, mainEdition, year, month, day, date.replace("/", "_"), pageData.get("DisplayPageNumber"), mainEdition);
+            pagesLinks.add(pageUrl);
         });
 
         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-        response.put("epaper", epaper);
+        response.put(EPAPER_STRING, epaper);
         return response;
     }
 
@@ -213,11 +222,10 @@ public class EpaperService {
             Epaper epaper = null;
             try {
                 if(publication.equals("HT")) {
-                    epaper = (Epaper) getHTpdf(mainEdition, date).get("epaper");
+                    epaper = (Epaper) getHTpdf(mainEdition, date).get(EPAPER_STRING);
                 } else {
-                    epaper = (Epaper) getTOIpdf(mainEdition, date).get("epaper");
+                    epaper = (Epaper) getTOIpdf(mainEdition, date).get(EPAPER_STRING);
                 }
-                System.gc();
                 AppUtils.compressPDF(epaper);
                 emailService.mailPDF(emailId, epaper);
             } catch (Exception e) {

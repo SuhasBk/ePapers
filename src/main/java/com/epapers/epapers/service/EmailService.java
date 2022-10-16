@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EmailService {
 
-    public static String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
+    private static final String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
     private final JavaMailSender emailSender;
 
     public EmailService(JavaMailSender emailSender) {
