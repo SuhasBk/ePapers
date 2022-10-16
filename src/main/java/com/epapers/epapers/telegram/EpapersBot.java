@@ -152,7 +152,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                         Epaper toiPDF = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toiPDF.getFile().getName())));
                         File file = toiPDF.getFile();
-                        if(file.length() / (1024*1024) < 40) {
+                        if(!AppUtils.isLargeFile(file, "TELEGRAM")) {
                             executeAsync(new SendDocument(chatId, new InputFile(file)));
                         }
                         break;

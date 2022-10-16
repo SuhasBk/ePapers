@@ -8,6 +8,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
 import com.epapers.epapers.model.Epaper;
+import com.epapers.epapers.util.AppUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +35,10 @@ public class EmailService {
             helper.setTo(emailId);
             helper.setSubject("🎉🥳🎊 Hey! Your requested ePaper on : " + epaper.getDate() + " is ready.");
             helper.setText("Hello there,\n\nYou can access your ePaper from here: " + String.format(FILE_ACCESS_URL, epaper.getFile().getName()));
-            helper.addAttachment(epaper.getFile().getName(), pdfFile);
+
+            if(!AppUtils.isLargeFile(epaper.getFile(), "GMAIL")) {
+                helper.addAttachment(epaper.getFile().getName(), pdfFile);
+            }
 
             emailSender.send(message);
             log.info("EMAIL SENT SUCCESSFULLY!");

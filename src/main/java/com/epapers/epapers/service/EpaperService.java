@@ -226,7 +226,7 @@ public class EpaperService {
                 } else {
                     epaper = (Epaper) getTOIpdf(mainEdition, date).get(EPAPER_KEY_STRING);
                 }
-                AppUtils.compressPDF(epaper);
+                // AppUtils.compressPDF(epaper);
                 emailService.mailPDF(emailId, epaper);
             } catch (Exception e) {
                 e.printStackTrace();

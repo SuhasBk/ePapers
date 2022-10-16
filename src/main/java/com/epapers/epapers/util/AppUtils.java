@@ -133,6 +133,22 @@ public class AppUtils {
         epaper.setFile(newFile);
     }
 
+    public static boolean isLargeFile(File file, String serviceName) {
+        boolean result = false;
+        long fileSize = file.length() / (1024*1024);
+        switch(serviceName) {
+            case "TELEGRAM":
+                result = fileSize > 50;
+                break;
+            case "GMAIL":
+                result = fileSize > 25;
+                break;
+            default:
+                result = true;
+        }
+        return result;
+    }
+
     public static void deleteFile(File file) {
         try {
             Files.delete(file.toPath());
