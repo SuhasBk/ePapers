@@ -117,8 +117,7 @@ public class AppUtils {
 
                     // Write new image
                     ImageIO.write(img, "JPG", imgBytes);
-                    com.itextpdf.layout.element.Image imgNew = new com.itextpdf.layout.element.Image(
-                            ImageDataFactory.create(imgBytes.toByteArray()));
+                    com.itextpdf.layout.element.Image imgNew = new com.itextpdf.layout.element.Image(ImageDataFactory.create(imgBytes.toByteArray()));
 
                     // Replace the original image with the resized image
                     xObjects.put(imgRef, imgNew.getXObject().getPdfObject());

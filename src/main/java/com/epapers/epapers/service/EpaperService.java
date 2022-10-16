@@ -43,7 +43,7 @@ public class EpaperService {
     private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
     private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
     private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
-    private static final String EPAPER_STRING = "epaper";
+    private static final String EPAPER_KEY_STRING = "epaper";
 
     public List<Edition> getHTEditionList() throws Exception {
         List<Edition> editions = new ArrayList<>();
@@ -186,7 +186,7 @@ public class EpaperService {
         });
 
         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-        response.put(EPAPER_STRING, epaper);
+        response.put(EPAPER_KEY_STRING, epaper);
         return response;
     }
 
@@ -213,7 +213,7 @@ public class EpaperService {
         });
 
         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-        response.put(EPAPER_STRING, epaper);
+        response.put(EPAPER_KEY_STRING, epaper);
         return response;
     }
 
@@ -222,9 +222,9 @@ public class EpaperService {
             Epaper epaper = null;
             try {
                 if(publication.equals("HT")) {
-                    epaper = (Epaper) getHTpdf(mainEdition, date).get(EPAPER_STRING);
+                    epaper = (Epaper) getHTpdf(mainEdition, date).get(EPAPER_KEY_STRING);
                 } else {
-                    epaper = (Epaper) getTOIpdf(mainEdition, date).get(EPAPER_STRING);
+                    epaper = (Epaper) getTOIpdf(mainEdition, date).get(EPAPER_KEY_STRING);
                 }
                 AppUtils.compressPDF(epaper);
                 emailService.mailPDF(emailId, epaper);

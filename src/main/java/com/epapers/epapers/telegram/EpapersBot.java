@@ -41,7 +41,7 @@ public class EpapersBot extends TelegramLongPollingBot {
     private static final String BOT_USERNAME = "ePapers";
     private static final String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
     private static final String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
-    private static final String EPAPER_STRING = "epaper";
+    private static final String EPAPER_KEY_STRING = "epaper";
     private static final String ACCESS_STRING = "Access it using: ";
 
     @Override
@@ -82,13 +82,13 @@ public class EpapersBot extends TelegramLongPollingBot {
                 switch(userMessage) {
                     case "HTBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
-                        Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htpdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(htpdf.getFile())));
                         break;
                     case "TOIBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing TOI ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
-                        Epaper toipdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        Epaper toipdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toipdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
                         break;
@@ -144,12 +144,12 @@ public class EpapersBot extends TelegramLongPollingBot {
             try{
                 switch(publication) {
                     case "HT":
-                        Epaper htPDF = (Epaper) ePaperService.getHTpdf(editionId, AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        Epaper htPDF = (Epaper) ePaperService.getHTpdf(editionId, AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htPDF.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(htPDF.getFile())));
                         break;
                     case "TOI":
-                        Epaper toiPDF = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), AppUtils.getTodaysDate()).get(EPAPER_STRING);
+                        Epaper toiPDF = (Epaper) ePaperService.getTOIpdf(editionId.toLowerCase(), AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toiPDF.getFile().getName())));
                         File file = toiPDF.getFile();
                         if(file.length() / (1024*1024) < 40) {
