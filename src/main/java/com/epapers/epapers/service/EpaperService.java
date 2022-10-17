@@ -166,6 +166,7 @@ public class EpaperService {
             if(!executor.shutdownNow().isEmpty()) {
                 log.error("Some pages might not be added to PDF! :(");
             }
+            log.info("File size in MB: {}\n", (file.length() / (1024*1024)));
         }
 
         return epaper;
