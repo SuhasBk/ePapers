@@ -87,12 +87,12 @@ public class AppScheduler {
                 
                 if(htEdition != null) {
                     Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
-                    telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()));
+                    telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
                 }
 
                 if(toiEdition != null) {
                     Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, today).get("epaper");
-                    telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()));
+                    telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
                 }
                 log.info("ePapers successfully sent to - {}", chatId);                
             } catch (Exception e) {

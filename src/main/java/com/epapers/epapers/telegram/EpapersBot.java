@@ -54,9 +54,12 @@ public class EpapersBot extends TelegramLongPollingBot {
         return BOT_TOKEN;
     }
 
-    public void sendSubscriptionMessage(String chatId, String message) {
+    public void sendSubscriptionMessage(String chatId, String message, File file) {
         try {
             executeAsync(new SendMessage(chatId, message));
+            if (!AppUtils.isLargeFile(file, "TELEGRAM")) {
+                executeAsync(new SendDocument(chatId, new InputFile(file)));
+            }
         } catch (TelegramApiException e) {
             log.error("Failed to send subscribed message to {}", chatId);
         }
