@@ -44,7 +44,8 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 2, initialDelay = 2, timeUnit = TimeUnit.HOURS)
+    @Scheduled(cron = "0 0 */6 * * *", zone = "Asia/Kolkata")
+    // @Scheduled(fixedDelay = 1, initialDelay = 2, timeUnit = TimeUnit.HOURS)
     public void cleanUp() {
         try {
             File currDir = new File(".");
