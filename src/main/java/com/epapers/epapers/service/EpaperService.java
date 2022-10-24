@@ -124,7 +124,7 @@ public class EpaperService {
         }
 
         // define what the executor should do and return
-         ExecutorService executor = Executors.newCachedThreadPool();
+        ExecutorService executor = Executors.newCachedThreadPool();
         List<Callable<Image>> callableList = new ArrayList<>();
         List<Future<Image>> futureList;
         Document document = new Document();

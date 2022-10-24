@@ -55,5 +55,4 @@ public class EpapersApplication {
 			SpringApplication.run(EpapersApplication.class, args);
 		}
 	}
-
 }

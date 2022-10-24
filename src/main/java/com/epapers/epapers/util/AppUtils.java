@@ -135,13 +135,13 @@ public class AppUtils {
 
     public static boolean isLargeFile(File file, String serviceName) {
         boolean result = false;
-        long fileSize = file.length() / (1024*1024);
+        long fileSizeMB = file.length() / (1024*1024);
         switch(serviceName) {
             case "TELEGRAM":
-                result = fileSize > 50;
+                result = fileSizeMB > 50;
                 break;
             case "GMAIL":
-                result = fileSize > 25;
+                result = fileSizeMB > 25;
                 break;
             default:
                 result = true;

@@ -2,6 +2,7 @@ package com.epapers.epapers.telegram;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,14 +55,16 @@ public class EpapersBot extends TelegramLongPollingBot {
         return BOT_TOKEN;
     }
 
-    public void sendSubscriptionMessage(String chatId, String message, File file) {
+    public boolean sendSubscriptionMessage(String chatId, String message, File file) {
         try {
             executeAsync(new SendMessage(chatId, message));
-            if (!AppUtils.isLargeFile(file, "TELEGRAM")) {
+            if (file != null && !AppUtils.isLargeFile(file, "TELEGRAM")) {
                 executeAsync(new SendDocument(chatId, new InputFile(file)));
             }
+            return true;
         } catch (TelegramApiException e) {
             log.error("Failed to send subscribed message to {}", chatId);
+            return false;
         }
     }
 
@@ -81,8 +84,14 @@ public class EpapersBot extends TelegramLongPollingBot {
 
             try {
                 String userMessage = update.getMessage().getText().toUpperCase();
-                StringBuilder editions = new StringBuilder();
+                StringBuilder editionPrompt = new StringBuilder();
                 switch(userMessage) {
+                    case "REVEAL_USERS":
+                        List<EpapersUser> allUsers = userService.getAllUsers();
+                        executeAsync(new SendMessage(chatId, allUsers.toString()));
+                    case "REVEAL_SUBSCRIBERS":
+                        List<EpapersSubscription> allSubscribers = subscriptionService.getAllSubscriptions();
+                        executeAsync(new SendMessage(chatId, allSubscribers.toString()));
                     case "HTBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
                         Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
@@ -96,16 +105,16 @@ public class EpapersBot extends TelegramLongPollingBot {
                         executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
                         break;
                     case "HT":
-                        editions.append("💡 Copy the WHOLE text for your city and type: 'download <copied_text>'\n\n");
-                        editions.append("Example: download Bengaluru_102_HT\n\n");
-                        ePaperService.getHTEditionList().forEach(edition -> editions.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "HT\n\n"));
-                        executeAsync(new SendMessage(chatId, editions.toString()));
+                        editionPrompt.append("💡 Copy the WHOLE text for your city and send: 'download <copied_text>'\n\n");
+                        editionPrompt.append("Example: download Bengaluru_102_HT\n\n");
+                        ePaperService.getHTEditionList().forEach(edition -> editionPrompt.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "HT\n\n"));
+                        executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         break;
                     case "TOI":
-                        editions.append("💡 Copy the WHOLE text for your city and type: 'download <copied_text>'\n\n");
-                        editions.append("Example: download Bangalore_toibgc_TOI\n\n");
-                        ePaperService.getTOIEditionList().forEach(edition -> editions.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "TOI\n\n"));
-                        executeAsync(new SendMessage(chatId, editions.toString()));
+                        editionPrompt.append("💡 Copy the WHOLE text for your city and send: 'download <copied_text>'\n\n");
+                        editionPrompt.append("Example: download Bangalore_toibgc_TOI\n\n");
+                        ePaperService.getTOIEditionList().forEach(edition -> editionPrompt.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "TOI\n\n"));
+                        executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         break;
                     case "SUBSCRIBE":
                         executeAsync(new SendMessage(chatId, "Alright! Please enter 'subscribe <city>' to start your daily subscription.\n\n\nP.S.\nTo unsubscribe, please enter 'unsubscribe'."));

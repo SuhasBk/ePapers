@@ -4,6 +4,8 @@ import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,29 +78,37 @@ public class AppScheduler {
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
     // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
+        ExecutorService executor = Executors.newCachedThreadPool();
         String today = AppUtils.getTodaysDate();
         List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
-        log.info("Processing all subscriptions - {}", subscriptions);
-        subscriptions.forEach(subscription -> {
-            try {
-                String chatId = subscription.getChatId();
-                Map<String, String> editions = subscription.getEditions();
-                String toiEdition = editions.get("TOI");
-                String htEdition = editions.get("HT");
-                
-                if(htEdition != null) {
-                    Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
-                    telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
-                }
 
-                if(toiEdition != null) {
-                    Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, today).get("epaper");
-                    telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+        log.info("Processing all subscriptions - {}", subscriptions);
+        
+        subscriptions.forEach(subscription -> {
+            Runnable runnableTask = () -> {
+                try {
+                    String chatId = subscription.getChatId();
+                    Map<String, String> editions = subscription.getEditions();
+                    String toiEdition = editions.get("TOI");
+                    String htEdition = editions.get("HT");
+
+                    if (htEdition != null) {
+                        Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
+                        System.out.println(FILE_ACCESS_URL);
+                        telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+                    }
+
+                    if (toiEdition != null) {
+                        Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, today).get("epaper");
+                        telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+                    }
+                    log.info("ePapers successfully sent to - {}", chatId);
+                } catch (Exception e) {
+                    log.error("Subscription service failed. - {}", e);
                 }
-                log.info("ePapers successfully sent to - {}", chatId);                
-            } catch (Exception e) {
-                log.error("Subscription service failed. - {}", e);
-            }
+            };
+
+            executor.submit(runnableTask);
         });
     }
 }
