@@ -89,9 +89,15 @@ public class EpapersBot extends TelegramLongPollingBot {
                     case "REVEAL_USERS":
                         List<EpapersUser> allUsers = userService.getAllUsers();
                         executeAsync(new SendMessage(chatId, allUsers.toString()));
+                        break;
                     case "REVEAL_SUBSCRIBERS":
                         List<EpapersSubscription> allSubscribers = subscriptionService.getAllSubscriptions();
                         executeAsync(new SendMessage(chatId, allSubscribers.toString()));
+                        break;
+                    case "REFRESH_USERS":
+                        userService.refreshDB();
+                        executeAsync(new SendMessage(chatId, "Cleared User History 👍"));
+                        break;
                     case "HTBNG":
                         executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
                         Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
