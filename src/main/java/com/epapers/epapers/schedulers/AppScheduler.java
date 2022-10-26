@@ -47,7 +47,6 @@ public class AppScheduler {
     }
 
     @Scheduled(cron = "0 0 */6 * * *", zone = "Asia/Kolkata")
-    // @Scheduled(fixedDelay = 1, initialDelay = 2, timeUnit = TimeUnit.HOURS)
     public void cleanUp() {
         try {
             File currDir = new File(".");
@@ -76,7 +75,6 @@ public class AppScheduler {
     }
 
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
-    // @Scheduled(fixedRate = 2, timeUnit = TimeUnit.MINUTES)
     public void telegramSubscriptions() {
         ExecutorService executor = Executors.newCachedThreadPool();
         String today = AppUtils.getTodaysDate();
@@ -86,26 +84,31 @@ public class AppScheduler {
         
         subscriptions.forEach(subscription -> {
             Runnable runnableTask = () -> {
-                try {
-                    String chatId = subscription.getChatId();
-                    Map<String, String> editions = subscription.getEditions();
-                    String toiEdition = editions.get("TOI");
-                    String htEdition = editions.get("HT");
+                String chatId = subscription.getChatId();
+                Map<String, String> editions = subscription.getEditions();
+                String toiEdition = editions.get("TOI");
+                String htEdition = editions.get("HT");
 
-                    if (htEdition != null) {
+                if (htEdition != null) {
+                    try {
                         Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
                         System.out.println(FILE_ACCESS_URL);
                         telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+                    } catch(Exception e) {
+                        log.error("HT Subscription service failed. - {}", e);
                     }
+                }
 
-                    if (toiEdition != null) {
+                if (toiEdition != null) {
+                    try {
                         Epaper toiPdf = (Epaper) epaperService.getTOIpdf(toiEdition, today).get("epaper");
                         telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+                    } catch(Exception e) {
+                        log.error("TOI Subscription service failed. - {}", e);
                     }
-                    log.info("ePapers successfully sent to - {}", chatId);
-                } catch (Exception e) {
-                    log.error("Subscription service failed. - {}", e);
                 }
+
+                log.info("ePapers successfully sent to - {}", chatId);
             };
 
             executor.submit(runnableTask);

@@ -26,7 +26,7 @@ import com.epapers.epapers.telegram.EpapersBot;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
-public class AppSchedulersTest {
+public class AppSchedulersTests {
     @InjectMocks
     AppScheduler scheduler;
 
