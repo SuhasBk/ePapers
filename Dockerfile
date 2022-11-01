@@ -1,4 +1,4 @@
-FROM eclipse-temurin:11
+FROM amazoncorretto:11
 COPY target/*.jar ./epapers.jar
 EXPOSE 8000:8000
 ENTRYPOINT [ "java", "-XX:MaxDirectMemorySize=2048M", "-Xmx1024m", "-jar", "./epapers.jar" ]
