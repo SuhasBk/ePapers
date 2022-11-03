@@ -201,9 +201,9 @@ public class EpapersBot extends TelegramLongPollingBot {
             if (!subscribedEditions.isEmpty()) {
                 EpapersSubscription subscription = new EpapersSubscription(chatId, user, subscribedEditions);
                 subscriptionService.addSubscription(subscription);
-                executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend 'unsubscribe' any time you wish."));
+                executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend '/unsubscribe' any time you wish."));
             } else {
-                executeAsync(new SendMessage(chatId,"Could not find your city 🤔. To see a list of available cities, enter 'HT' or 'TOI'."));
+                executeAsync(new SendMessage(chatId,"Could not find your city 🤔. To see a list of available cities, enter '/HT' or '/TOI'."));
             }
         }
     }
