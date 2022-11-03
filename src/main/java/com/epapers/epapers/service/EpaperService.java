@@ -142,10 +142,7 @@ public class EpaperService {
         links.forEach(imgLink -> callableList.add(() -> {
             Image image = Image.getInstance(new URL(imgLink));
             // scale factor based on publication:
-            if(edition.equals("BEN")) {
-                image.scalePercent(50f);
-            }
-            else if(imgLink.contains("harnscloud")) {
+            if(imgLink.contains("harnscloud")) {
                 image.scalePercent(27f);    //TOI
             } else {
                 image.scalePercent(21f);    //HT
