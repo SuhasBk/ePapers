@@ -115,23 +115,27 @@ public class EpapersBot extends TelegramLongPollingBot {
                         executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
                         break;
                     case "/HT":
-                        editionPrompt.append("💡 Copy the WHOLE text for your city and send: 'download <copied_text>'\n\n");
+                        editionPrompt.append("💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
                         editionPrompt.append("Example: /download Bengaluru_102_HT\n\n");
                         ePaperService.getHTEditionList().forEach(edition -> editionPrompt.append("👉 ").append(edition.getEditionName()).append("_").append(edition.getEditionId()).append("_").append("HT\n\n"));
                         executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         break;
                     case "/TOI":
-                        editionPrompt.append("💡 Copy the WHOLE text for your city and send: 'download <copied_text>'\n\n");
+                        editionPrompt.append("💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
                         editionPrompt.append("Example: /download Bangalore_toibgc_TOI\n\n");
                         ePaperService.getTOIEditionList().forEach(edition -> editionPrompt.append("👉 ").append(edition.getEditionName()).append("_").append(edition.getEditionId()).append("_").append("TOI\n\n"));
                         executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         break;
                     case "/SUBSCRIBE":
-                        executeAsync(new SendMessage(chatId, "Alright! Please enter '/subscribe <city>' to start your daily subscription.\n\n\nP.S.\nTo unsubscribe, please enter 'unsubscribe'."));
+                        executeAsync(new SendMessage(chatId, "Alright! Please enter '/subscribe <city>' to start your daily subscription.\n\n\nP.S.\nTo unsubscribe, please enter '/unsubscribe'."));
                         break;
                     case "/UNSUBSCRIBE":
-                        executeAsync(new SendMessage(chatId, "Awww. Sad to hear that! 😢"));
-                        subscriptionService.removeSubscription(chatId);
+                        boolean unsubscribed = subscriptionService.removeSubscription(chatId);
+                        if(!unsubscribed) {
+                            executeAsync(new SendMessage(chatId, "You are not subscribed to any edition!\n\n/subscribe to start daily subscription."));
+                        } else {
+                            executeAsync(new SendMessage(chatId, "Awww. Sad to hear that! 😢"));
+                        }
                         break;
                     default:
                         if (userMessage.startsWith("/DOWNLOAD ")) {

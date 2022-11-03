@@ -22,10 +22,17 @@ public class SubscriptionService {
         log.info("Subscribed successfully - {}", subscription);
     }
 
-    public void removeSubscription(String chatId) {
-        EpapersSubscription subscription = subscriptionRepository.findById(chatId).orElseThrow();
-        subscriptionRepository.delete(subscription);
-        log.info("Unsubscribed successfully - {}", subscription);
+    public boolean removeSubscription(String chatId) {
+        boolean result = true;
+        EpapersSubscription subscription = subscriptionRepository.findById(chatId).orElse(null);
+        if(subscription == null) {
+            log.info("Not subscribed to unsubscribe! - {}", chatId);
+            result = false;
+        } else {
+            subscriptionRepository.delete(subscription);
+            log.info("Unsubscribed successfully - {}", subscription);
+        }
+        return result;
     }
 
     public List<EpapersSubscription> getAllSubscriptions() {

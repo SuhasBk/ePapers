@@ -52,7 +52,7 @@ public class EpaperService {
             Edition editionInfo = new Edition(Double.valueOf(edition.get("EditionId").toString()).intValue()+"", edition.get("EditionDisplayName").toString());
             editions.add(editionInfo);
         });
-        log.info("Edition list: {}", editions);
+        log.info("HT Edition list: {}", editions);
         return editions;
     }
 
@@ -65,6 +65,7 @@ public class EpaperService {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
+        log.info("TOI Edition list: {}", toiEditions);
         return toiEditions;
     }
 
