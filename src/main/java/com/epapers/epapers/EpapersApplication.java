@@ -1,7 +1,8 @@
 package com.epapers.epapers;
 
-import java.util.Properties;
-
+import com.epapers.epapers.util.AppUtils;
+import com.epapers.epapers.util.DesktopApp;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -10,10 +11,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import com.epapers.epapers.util.AppUtils;
-import com.epapers.epapers.util.DesktopApp;
-
-import lombok.extern.slf4j.Slf4j;
+import java.util.Properties;
 
 @SpringBootApplication
 @EnableMongoRepositories

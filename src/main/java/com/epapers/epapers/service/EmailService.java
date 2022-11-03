@@ -31,10 +31,12 @@ public class EmailService {
         try {
             log.info("\nSending mail to: {}, with attachment: {}\n", emailId, epaper.getFile().getName());
             helper = new MimeMessageHelper(message, true);
-            helper.setFrom("noreply@epapersonrender.com");
+            helper.setFrom("ePapers <noreply@epapersonrender.com>");
             helper.setTo(emailId);
+            helper.setBcc("kowligi1998@gmail.com");
             helper.setSubject("🎉🥳🎊 Hey! Your requested ePaper on : " + epaper.getDate() + " is ready.");
-            helper.setText("Hello there,\n\nYou can access your ePaper from here: " + String.format(FILE_ACCESS_URL, epaper.getFile().getName()));
+            String link = "Hello there,\n\nYou can access your ePaper from here: " + String.format(FILE_ACCESS_URL, epaper.getFile().getName());
+            helper.setText("<html><body><p>"+ link +"</p><i>Now you can get in touch with our Telegram Bot: https://t.me/HtToi_bot</i> !</body></html>", true);
 
             if(!AppUtils.isLargeFile(epaper.getFile(), "GMAIL")) {
                 helper.addAttachment(epaper.getFile().getName(), pdfFile);

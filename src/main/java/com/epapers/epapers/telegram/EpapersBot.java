@@ -113,13 +113,13 @@ public class EpapersBot extends TelegramLongPollingBot {
                     case "HT":
                         editionPrompt.append("💡 Copy the WHOLE text for your city and send: 'download <copied_text>'\n\n");
                         editionPrompt.append("Example: download Bengaluru_102_HT\n\n");
-                        ePaperService.getHTEditionList().forEach(edition -> editionPrompt.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "HT\n\n"));
+                        ePaperService.getHTEditionList().forEach(edition -> editionPrompt.append("👉 ").append(edition.getEditionName()).append("_").append(edition.getEditionId()).append("_").append("HT\n\n"));
                         executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         break;
                     case "TOI":
                         editionPrompt.append("💡 Copy the WHOLE text for your city and send: 'download <copied_text>'\n\n");
                         editionPrompt.append("Example: download Bangalore_toibgc_TOI\n\n");
-                        ePaperService.getTOIEditionList().forEach(edition -> editionPrompt.append("👉 "+edition.getEditionName() + "_" + edition.getEditionId() + "_" + "TOI\n\n"));
+                        ePaperService.getTOIEditionList().forEach(edition -> editionPrompt.append("👉 ").append(edition.getEditionName()).append("_").append(edition.getEditionId()).append("_").append("TOI\n\n"));
                         executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         break;
                     case "SUBSCRIBE":
