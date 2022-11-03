@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -15,6 +16,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +47,8 @@ public class EpaperService {
     private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
     private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
     private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
+    private static final String KP_BASE_URL = "https://kpepaper.asianetnews.com/t/12222";
+    private static final String KP_EDITION_LINK = "https://kpepaper.asianetnews.com/download/fullpdflink/newspaper/12222/%s";
     private static final String EPAPER_KEY_STRING = "epaper";
 
     public List<Edition> getHTEditionList() throws Exception {
@@ -136,7 +142,10 @@ public class EpaperService {
         links.forEach(imgLink -> callableList.add(() -> {
             Image image = Image.getInstance(new URL(imgLink));
             // scale factor based on publication:
-            if(imgLink.contains("harnscloud")) {
+            if(edition.equals("BEN")) {
+                image.scalePercent(50f);
+            }
+            else if(imgLink.contains("harnscloud")) {
                 image.scalePercent(27f);    //TOI
             } else {
                 image.scalePercent(21f);    //HT
@@ -215,6 +224,34 @@ public class EpaperService {
         });
 
         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
+        response.put(EPAPER_KEY_STRING, epaper);
+        return response;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> getKannadaPrabha() throws Exception {
+        Map<String, Object> response = new HashMap<>();
+        Epaper epaper = new Epaper(AppUtils.getTodaysDate(), "BNG");
+        String fileDownloadURL = null;
+
+        if(epaper.getFile().exists()) {
+            log.info("File already exists, skipping download from servers...");
+            response.put(EPAPER_KEY_STRING, epaper);
+            return response;
+        }
+
+        Elements allDivs = Jsoup.connect(KP_BASE_URL).get().getElementsByClass("papr-card");
+        Element todayDiv = Optional.ofNullable(allDivs.first()).orElseThrow().parent();
+        String edition = Optional.ofNullable(todayDiv).orElseThrow().attr("href").split("/r/")[1];
+
+        Map<String, Object> kpResponse = AppUtils.getKPJsonObject(String.format(KP_EDITION_LINK, edition));
+        if (!(Boolean) kpResponse.get("status")) {
+            return null;
+        }
+        fileDownloadURL = ((Map<String, String>) kpResponse.get("data")).get("fullpdf");
+        
+        AppUtils.downloadFileFromUrl(Optional.ofNullable(fileDownloadURL).orElseThrow(), epaper.getFile());
+
         response.put(EPAPER_KEY_STRING, epaper);
         return response;
     }

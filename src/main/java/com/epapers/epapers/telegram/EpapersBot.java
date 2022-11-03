@@ -114,6 +114,12 @@ public class EpapersBot extends TelegramLongPollingBot {
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toipdf.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
                         break;
+                    case "/KP":
+                        executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing KP ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
+                        Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabha().get(EPAPER_KEY_STRING);
+                        executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName())));
+                        executeAsync(new SendDocument(chatId, new InputFile(kpPdf.getFile())));
+                        break;
                     case "/HT":
                         editionPrompt.append("💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
                         editionPrompt.append("Example: /download Bengaluru_102_HT\n\n");

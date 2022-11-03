@@ -3,8 +3,10 @@ package com.epapers.epapers.util;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -55,8 +57,8 @@ public class AppUtils {
         return todaysDate;
     }
 
-    public static java.util.List<Map<String, Object>> getHTJsonObject(String urlString) {
-        java.util.List<Map<String, Object>> response = new ArrayList<>();
+    public static List<Map<String, Object>> getHTJsonObject(String urlString) {
+        List<Map<String, Object>> response = new ArrayList<>();
         log.info("Accessing HT url : {}", urlString);
         try (InputStreamReader reader = new InputStreamReader(new URL(urlString).openStream())) {
             response = gson.fromJson(reader, List.class);
@@ -71,6 +73,20 @@ public class AppUtils {
     }
 
     public static Map<String, Object> getTOIJsonObject(String urlString) throws Exception {
+        Map<String, Object> response = new HashMap<>();
+        try (InputStreamReader reader = new InputStreamReader(new URL(urlString).openStream())) {
+            response = gson.fromJson(reader, Map.class);
+        } catch (Exception e) {
+            log.error("Oops, something is wrong!", e);
+        }
+
+        if (response.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "I am guessing yesterday was a holiday for journalists, they must be chilling today, try tomorrow!\n\nIf it still ain't working, then adiós, we are done here...");
+        }
+        return response;
+    }
+
+    public static Map<String, Object> getKPJsonObject(String urlString) throws Exception {
         Map<String, Object> response = new HashMap<>();
         try (InputStreamReader reader = new InputStreamReader(new URL(urlString).openStream())) {
             response = gson.fromJson(reader, Map.class);
@@ -155,5 +171,17 @@ public class AppUtils {
         } catch(IOException e) {
             log.error("Oops! Failed to delete tmp file: {}", file.getAbsolutePath());
         }
+    }
+
+    public static void downloadFileFromUrl(String fileUrl, File destFile) throws Exception {
+        URL url = new URL(fileUrl);
+        try(BufferedInputStream bis = new BufferedInputStream(url.openStream());
+            FileOutputStream fis = new FileOutputStream(destFile);) {
+            byte[] buffer = new byte[1024];
+            int count = 0;
+            while ((count = bis.read(buffer, 0, 1024)) != -1) {
+                fis.write(buffer, 0, count);
+            }
+        };
     }
 }

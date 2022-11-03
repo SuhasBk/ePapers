@@ -108,6 +108,15 @@ public class AppScheduler {
                     }
                 }
 
+                if(htEdition == "102") {
+                    try {
+                        Epaper kpPdf = (Epaper) epaperService.getKannadaPrabha().get("epaper");
+                        telegramBot.sendSubscriptionMessage(chatId, "Access your KP ePaper here: " + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()), kpPdf.getFile());
+                    } catch(Exception e) {
+                        log.error("KP Subscription service failed. - {}", e);
+                    }
+                }
+
                 log.info("ePapers successfully sent to - {}", chatId);
             };
 

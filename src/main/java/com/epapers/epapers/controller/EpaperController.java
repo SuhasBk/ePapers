@@ -136,4 +136,10 @@ public class EpaperController {
         userService.refreshDB();
         return "done";
     }
+
+    // @GetMapping("/internal_testing")
+    // public String test() throws Exception {
+    //     Epaper pdfDocument = (Epaper) ePaperService.getKannadaPrabha().get("epaper");
+    //     return pdfDocument.getFile().getName();
+    // }
 }
