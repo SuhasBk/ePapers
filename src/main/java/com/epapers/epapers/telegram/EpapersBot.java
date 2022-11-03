@@ -44,6 +44,7 @@ public class EpapersBot extends TelegramLongPollingBot {
     private static final String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
     private static final String EPAPER_KEY_STRING = "epaper";
     private static final String ACCESS_STRING = "Access it using: ";
+    private static final String PROMPT_STRING = "Hello there!\n\n👉 Enter publication: /HT or /TOI.\n\n👉 Enter '/download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter '/subscribe' to get ePapers daily at 8:00 A.M.\n\n\n/help to view this again";
 
     @Override
     public String getBotUsername() {
@@ -86,6 +87,9 @@ public class EpapersBot extends TelegramLongPollingBot {
                 String userMessage = update.getMessage().getText().toUpperCase();
                 StringBuilder editionPrompt = new StringBuilder();
                 switch(userMessage) {
+                    case "/HELP":
+                        executeAsync(new SendMessage(chatId, PROMPT_STRING));
+                        break;
                     case "/REVEAL_USERS":
                         List<EpapersUser> allUsers = userService.getAllUsers();
                         executeAsync(new SendMessage(chatId, allUsers.toString()));
@@ -135,8 +139,9 @@ public class EpapersBot extends TelegramLongPollingBot {
                         } else if (userMessage.startsWith("/SUBSCRIBE ")) {
                             subscribeNewUser(chatId, user, userMessage);
                         } else {
-                            String promptMessage = "Hello there!\n\n👉 Enter publication: /HT or /TOI.\n\n👉 Enter '/download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter '/subscribe' to get ePapers daily at 8:00 A.M.";
-                            executeAsync(new SendMessage(chatId, promptMessage));
+                            if(!update.getMessage().isGroupMessage()) {
+                                executeAsync(new SendMessage(chatId, PROMPT_STRING));
+                            }
                         }
                 }
             } catch (Exception e) {
