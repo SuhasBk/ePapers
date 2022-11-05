@@ -94,6 +94,12 @@ public class AppScheduler {
                         Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
                         System.out.println(FILE_ACCESS_URL);
                         telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+
+                        if (htEdition.equals("102")) {
+                            System.out.println("Sending surprise paper - Kannada Prabha to user/group - " + chatId);
+                            Epaper kpPdf = (Epaper) epaperService.getKannadaPrabha().get("epaper");
+                            telegramBot.sendSubscriptionMessage(chatId, "Access today's bonus KP ePaper here: " + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()), kpPdf.getFile());
+                        }
                     } catch(Exception e) {
                         log.error("HT Subscription service failed. - {}", e);
                     }
@@ -105,15 +111,6 @@ public class AppScheduler {
                         telegramBot.sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
                     } catch(Exception e) {
                         log.error("TOI Subscription service failed. - {}", e);
-                    }
-                }
-
-                if(htEdition == "102") {
-                    try {
-                        Epaper kpPdf = (Epaper) epaperService.getKannadaPrabha().get("epaper");
-                        telegramBot.sendSubscriptionMessage(chatId, "Access your KP ePaper here: " + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()), kpPdf.getFile());
-                    } catch(Exception e) {
-                        log.error("KP Subscription service failed. - {}", e);
                     }
                 }
 
