@@ -56,27 +56,6 @@ public class EpapersBot extends TelegramLongPollingBot {
         return BOT_TOKEN;
     }
 
-    public boolean sendSubscriptionMessage(String chatId, String message, File file) {
-        try {
-            executeAsync(new SendMessage(chatId, message));
-            if (file != null && !AppUtils.isLargeFile(file, "TELEGRAM")) {
-                executeAsync(new SendDocument(chatId, new InputFile(file)));
-            }
-            return true;
-        } catch (TelegramApiException e) {
-            log.error("Failed to send subscribed message to {}", chatId);
-            return false;
-        }
-    }
-
-    public void handleErrors(String chatId, String feedback) {
-        try {
-            executeAsync(new SendMessage(chatId, feedback));
-        } catch (TelegramApiException e1) {
-            log.error("TELEGRAM-SERVICE: Failed to send feedback");
-        }
-    }
-
     @Override
     public void onUpdateReceived(Update update) {
         if(update.hasMessage() && !update.getMessage().getText().isEmpty()) {
@@ -211,6 +190,27 @@ public class EpapersBot extends TelegramLongPollingBot {
             } else {
                 executeAsync(new SendMessage(chatId,"Could not find your city 🤔. To see a list of available cities, enter '/HT' or '/TOI'."));
             }
+        }
+    }
+
+    public boolean sendSubscriptionMessage(String chatId, String message, File file) {
+        try {
+            executeAsync(new SendMessage(chatId, message));
+            if (file != null && !AppUtils.isLargeFile(file, "TELEGRAM")) {
+                executeAsync(new SendDocument(chatId, new InputFile(file)));
+            }
+            return true;
+        } catch (TelegramApiException e) {
+            log.error("Failed to send subscribed message to {}", chatId);
+            return false;
+        }
+    }
+
+    public void handleErrors(String chatId, String feedback) {
+        try {
+            executeAsync(new SendMessage(chatId, feedback));
+        } catch (TelegramApiException e1) {
+            log.error("TELEGRAM-SERVICE: Failed to send feedback");
         }
     }
 }
