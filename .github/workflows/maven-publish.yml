@@ -32,8 +32,8 @@ jobs:
         git config --global user.email "kowligi1998@gmail.com"
         git config --global credential.helper cache
         git clone https://${{secrets.ACCESS_TOKEN}}@github.com/SuhasBk/epapers
-        cp target/*.jar epapers/target/epapers.jar
+        cp target/*.jar epapers/JAR/epapers.jar
         cd epapers
-        git add target/*.jar
+        git add JAR/*.jar
         git commit -m "JAR package"
         git push
