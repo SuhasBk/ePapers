@@ -14,7 +14,7 @@
 	<name>epapers</name>
 	<description>Demo project for Spring Boot</description>
 	<properties>
-		<java.version>11</java.version>
+		<java.version>17</java.version>
 		<frontend-src-dir>${project.basedir}/src/main/react-frontend</frontend-src-dir>
 		<node.version>v16.17.0</node.version>
 		<yarn.version>v1.22.19</yarn.version>
