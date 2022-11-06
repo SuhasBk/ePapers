@@ -46,19 +46,6 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(cron = "0 0 */6 * * *", zone = "Asia/Kolkata")
-    public void cleanUp() {
-        try {
-            File currDir = new File(".");
-            for (File file : currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
-                AppUtils.deleteFile(file);
-            }
-            log.info("Old files purged successfully!");
-        } catch (Exception e) {
-            log.error("Could not delete old files. {}", e);
-        }
-    }
-
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void collectGarbage() {
         System.gc();
@@ -69,8 +56,13 @@ public class AppScheduler {
         try {
             new URL("https://epapers.onrender.com/api/epapers/refreshDB").openStream();
             log.info("Starting a new day. 😊");
+            File currDir = new File(".");
+            for (File file : currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
+                AppUtils.deleteFile(file);
+            }
+            log.info("Old files purged successfully!");
         } catch (Exception e) {
-            log.error("Failed to refresh db.");
+            log.error("Failed to refresh db or delete old files.");
         }
     }
 
@@ -92,11 +84,10 @@ public class AppScheduler {
                 if (htEdition != null) {
                     try {
                         Epaper htPdf = (Epaper) epaperService.getHTpdf(htEdition, today).get("epaper");
-                        System.out.println(FILE_ACCESS_URL);
                         telegramBot.sendSubscriptionMessage(chatId, "Access your HT ePaper here: " + String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
 
                         if (htEdition.equals("102")) {
-                            System.out.println("Sending surprise paper - Kannada Prabha to user/group - " + chatId);
+                            log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
                             Epaper kpPdf = (Epaper) epaperService.getKannadaPrabha().get("epaper");
                             telegramBot.sendSubscriptionMessage(chatId, "Access today's bonus KP ePaper here: " + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()), kpPdf.getFile());
                         }

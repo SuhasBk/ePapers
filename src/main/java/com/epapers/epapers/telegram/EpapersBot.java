@@ -44,7 +44,20 @@ public class EpapersBot extends TelegramLongPollingBot {
     private static final String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
     private static final String EPAPER_KEY_STRING = "epaper";
     private static final String ACCESS_STRING = "Access it using: ";
-    private static final String PROMPT_STRING = "Hello there!\n\n👉 Enter publication: /HT or /TOI.\n\n👉 Enter '/download <copy_paste_edition>'\n\n👉 Have patience! 🙂\n\n👉 Enter '/subscribe' to get ePapers daily at 8:00 A.M.\n\n\n/help to view this again";
+    private static final String PROMPT_STRING = """
+        Hello there!
+        
+        👉 Enter publication: /HT or /TOI.
+        
+        👉 Enter '/download <copy_paste_edition>'
+        
+        👉 Have patience! 🙂
+        
+        👉 Enter '/subscribe' to get ePapers daily at 8:00 A.M.
+        
+        
+        /help to view this again
+        """;
 
     @Override
     public String getBotUsername() {
