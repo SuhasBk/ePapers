@@ -64,7 +64,7 @@ function Home() {
         ).then(response => {
                 document.getElementById("downloadButton").removeAttribute("disabled");
                 setSpinnerHidden(true);
-                window.location.href = `/api/file?name=${response.data}`;
+                window.location.href = `${BACKEND_URL}/api/file?name=${response.data}`;
                 // var file = new Blob([response.data], { type: 'application/pdf' });
                 // var fileURL = URL.createObjectURL(file);
                 // if(IS_MOBILE) {
