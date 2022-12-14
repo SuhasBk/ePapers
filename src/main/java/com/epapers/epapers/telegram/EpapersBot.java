@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -225,5 +227,50 @@ public class EpapersBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e1) {
             log.error("TELEGRAM-SERVICE: Failed to send feedback");
         }
+    }
+
+    public void triggerSubscriptions() {
+        ExecutorService executor = Executors.newCachedThreadPool();
+        String today = AppUtils.getTodaysDate();
+        List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
+
+        log.info("Processing all subscriptions - {}", subscriptions);
+
+        subscriptions.forEach(subscription -> {
+            Runnable runnableTask = () -> {
+                String chatId = subscription.getChatId();
+                Map<String, String> editions = subscription.getEditions();
+                String toiEdition = editions.get("TOI");
+                String htEdition = editions.get("HT");
+
+                if (htEdition != null) {
+                    try {
+                        Epaper htPdf = (Epaper) ePaperService.getHTpdf(htEdition, today).get("epaper");
+                        sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+
+                        if (htEdition.equals("102")) {
+                            log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
+                            Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabha().get("epaper");
+                            sendSubscriptionMessage(chatId,"Access today's bonus KP ePaper here: "+ String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()),kpPdf.getFile());
+                        }
+                    } catch (Exception e) {
+                        log.error("HT Subscription service failed. - {}", e);
+                    }
+                }
+
+                if (toiEdition != null) {
+                    try {
+                        Epaper toiPdf = (Epaper) ePaperService.getTOIpdf(toiEdition, today).get("epaper");
+                        sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+                    } catch (Exception e) {
+                        log.error("TOI Subscription service failed. - {}", e);
+                    }
+                }
+
+                log.info("ePapers successfully sent to - {}", chatId);
+            };
+
+            executor.submit(runnableTask);
+        });
     }
 }

@@ -28,6 +28,7 @@ import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.EpapersUser;
 import com.epapers.epapers.service.EpaperService;
 import com.epapers.epapers.service.UserService;
+import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 
 @RestController
@@ -40,6 +41,9 @@ public class EpaperController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    EpapersBot telegramBot;
 
     @GetMapping("/getEditionList")
     public List<Edition> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
@@ -135,6 +139,12 @@ public class EpaperController {
     public String refreshDB() {
         userService.refreshDB();
         return "done";
+    }
+
+    @GetMapping("/trigger")
+    public ResponseEntity<String> trigger() {
+        telegramBot.triggerSubscriptions();
+        return ResponseEntity.ok().body("triggered!");
     }
 
     // @GetMapping("/internal_testing")

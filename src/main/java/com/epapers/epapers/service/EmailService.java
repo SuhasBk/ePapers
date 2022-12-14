@@ -48,4 +48,37 @@ public class EmailService {
             e.printStackTrace();
         }
     }
+
+    public void mailSOS() {
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper;
+
+        try {
+            helper = new MimeMessageHelper(message, true);
+            helper.setFrom("ePapers <noreply@epapersonrender.com>");
+            helper.setTo("suhasbk42@gmail.com");
+            helper.setBcc("kowligi1998@gmail.com");
+            helper.setSubject("E-Paper service is going down...");
+            helper.setText(
+                """
+                Hey!
+
+                Do not fret. I reckon you have around 5 minutes until service goes completely down.
+
+                Follow these two instructions to restore availibility:
+
+                1) Ping the website until its back again: https://epapers.onrender.com/ (check logs: https://dashboard.render.com/web/srv-ccmupnmn6mpqc1iul3jg/logs?mode=maximize)
+
+                2) If it's already too late, trigger epapers to Telegram subscribers: https://epapers.onrender.com/api/trigger
+
+                See you on the other side! 🙈
+                """);
+
+            emailSender.send(message);
+            log.info("MONITOR EMAIL SENT SUCCESSFULLY!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 }
