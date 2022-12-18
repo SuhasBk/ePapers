@@ -20,6 +20,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -270,5 +271,14 @@ public class EpaperService {
                     log.error("COULD NOT GENERATE, COMPRESS AND MAIL REQUESTED PDF");
             }
         }).start();
+    }
+
+    public FileSystemResource getFile(String fileName) {
+        File requestedFile = new File(fileName);
+        log.info("Someone is trying to access the resource: " + fileName);
+        if (!requestedFile.exists() || !requestedFile.getName().endsWith("pdf")) {
+            return new FileSystemResource("null");
+        }
+        return new FileSystemResource(requestedFile);
     }
 }

@@ -1,6 +1,5 @@
 package com.epapers.epapers.controller;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -119,15 +118,14 @@ public class EpaperController {
 
     @GetMapping("/file")
     public ResponseEntity<FileSystemResource> getFile(@RequestParam("name") String fileName) {
-        File requestedFile = new File(fileName);
+        FileSystemResource resource = ePaperService.getFile(fileName);
 
-        if (!requestedFile.exists() || !requestedFile.getName().endsWith("pdf")) {
+        if(!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
 
-        FileSystemResource resource = new FileSystemResource(requestedFile);
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + requestedFile.getName());
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + resource.getFile().getName());
 
         return ResponseEntity.ok()
                 .headers(headers)
@@ -146,10 +144,4 @@ public class EpaperController {
         telegramBot.triggerSubscriptions();
         return ResponseEntity.ok().body("triggered!");
     }
-
-    // @GetMapping("/internal_testing")
-    // public String test() throws Exception {
-    //     Epaper pdfDocument = (Epaper) ePaperService.getKannadaPrabha().get("epaper");
-    //     return pdfDocument.getFile().getName();
-    // }
 }
