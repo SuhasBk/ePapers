@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+// @SpringBootApplication(exclude = org.telegram.telegrambots.starter.TelegramBotStarterConfiguration.class)
 @SpringBootApplication
 @EnableMongoRepositories
 @EnableScheduling

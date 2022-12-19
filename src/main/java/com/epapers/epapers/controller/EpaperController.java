@@ -30,6 +30,9 @@ import com.epapers.epapers.service.UserService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @CrossOrigin("*")
@@ -85,7 +88,7 @@ public class EpaperController {
         String mainEdition = (String) payload.get("mainEdition");
         String date = (String) Optional.ofNullable(payload.get("date")).orElse(todaysDate);
         String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);
-        String ipAddress = request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
+        String ipAddress = AppUtils.getIPAddr(request);
 
         EpapersUser epapersUser = new EpapersUser(ipAddress.split(",")[0], null, mainEdition, mainEdition, todaysDate + new Date().getTime(), 1);
         if (!userService.canAccess(epapersUser)) {
@@ -117,7 +120,8 @@ public class EpaperController {
     }
 
     @GetMapping("/file")
-    public ResponseEntity<FileSystemResource> getFile(@RequestParam("name") String fileName) {
+    public ResponseEntity<FileSystemResource> getFile(@RequestParam("name") String fileName, HttpServletRequest request) {
+        log.info("{} is trying to access the resource: {}", AppUtils.getIPAddr(request), fileName);
         FileSystemResource resource = ePaperService.getFile(fileName);
 
         if(!resource.exists()) {

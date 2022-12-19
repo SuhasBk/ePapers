@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -183,5 +184,9 @@ public class AppUtils {
                 fis.write(buffer, 0, count);
             }
         };
+    }
+
+    public static String getIPAddr(HttpServletRequest request) {
+        return request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
     }
 }

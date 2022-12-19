@@ -275,7 +275,6 @@ public class EpaperService {
 
     public FileSystemResource getFile(String fileName) {
         File requestedFile = new File(fileName);
-        log.info("Someone is trying to access the resource: " + fileName);
         if (!requestedFile.exists() || !requestedFile.getName().endsWith("pdf")) {
             return new FileSystemResource("null");
         }
