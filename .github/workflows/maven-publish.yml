@@ -39,5 +39,5 @@ jobs:
         git checkout release
         cp ../target/*.jar JAR/epapers.jar
         git add JAR/*.jar
-        git commit -m "JAR package"
+        git commit -m '${{ github.event.head_commit.message }}'
         git push
