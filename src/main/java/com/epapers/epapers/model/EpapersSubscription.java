@@ -19,4 +19,5 @@ public class EpapersSubscription {
     String chatId;
     User user;
     Map<String, String> editions;
+    Boolean isActive;
 }

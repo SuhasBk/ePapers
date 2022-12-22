@@ -24,8 +24,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
+import com.epapers.epapers.model.EpapersSubscription;
 import com.epapers.epapers.model.EpapersUser;
 import com.epapers.epapers.service.EpaperService;
+import com.epapers.epapers.service.SubscriptionService;
 import com.epapers.epapers.service.UserService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
@@ -40,6 +42,9 @@ public class EpaperController {
     
     @Autowired
     EpaperService ePaperService;
+
+    @Autowired
+    SubscriptionService subscriptionService;
 
     @Autowired
     UserService userService;
@@ -135,6 +140,11 @@ public class EpaperController {
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
+    }
+
+    @GetMapping("/subscribers")
+    public List<EpapersSubscription> getSubscribers() {
+        return subscriptionService.getAllSubscriptions();
     }
 
     @GetMapping("/epapers/refreshDB")

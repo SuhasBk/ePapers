@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -199,7 +200,7 @@ public class EpapersBot extends TelegramLongPollingBot {
             String city = metaData[1];
             Map<String, String> subscribedEditions = ePaperService.getEditionFromCity(city);
             if (!subscribedEditions.isEmpty()) {
-                EpapersSubscription subscription = new EpapersSubscription(chatId, user, subscribedEditions);
+                EpapersSubscription subscription = new EpapersSubscription(chatId, user, subscribedEditions, true);
                 subscriptionService.addSubscription(subscription);
                 executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend '/unsubscribe' any time you wish."));
             } else {
@@ -232,7 +233,8 @@ public class EpapersBot extends TelegramLongPollingBot {
     public void triggerSubscriptions() {
         ExecutorService executor = Executors.newCachedThreadPool();
         String today = AppUtils.getTodaysDate();
-        List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions();
+        List<EpapersSubscription> subscriptions = subscriptionService.getAllSubscriptions()
+                                                    .stream().filter(sub -> sub.getIsActive()).collect(Collectors.toList());
 
         log.info("Processing all subscriptions - {}", subscriptions);
 

@@ -25,11 +25,12 @@ public class SubscriptionService {
     public boolean removeSubscription(String chatId) {
         boolean result = true;
         EpapersSubscription subscription = subscriptionRepository.findById(chatId).orElse(null);
-        if(subscription == null) {
+        if(subscription == null || !subscription.getIsActive()) {
             log.info("Not subscribed to unsubscribe! - {}", chatId);
             result = false;
         } else {
-            subscriptionRepository.delete(subscription);
+            subscription.setIsActive(false);
+            subscriptionRepository.save(subscription);
             log.info("Unsubscribed successfully - {}", subscription);
         }
         return result;

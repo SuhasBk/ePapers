@@ -44,7 +44,7 @@ public class AppSchedulersTests {
         List<EpapersSubscription> subscriptions = new ArrayList<>();
         Map<String, String> editions = new HashMap<>();
         editions.put("HT", "102");
-        subscriptions.add(new EpapersSubscription("749434510", null, editions));
+        subscriptions.add(new EpapersSubscription("749434510", null, editions, true));
 
         Epaper epaper = new Epaper();
         File dummyfile = Mockito.mock(File.class);
