@@ -32,10 +32,12 @@ public class AppScheduler {
     @Autowired
     EmailService emailService;
 
+    private static final String SERVER_URL = "https://epapers.onrender.com";
+
     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
         try {
-            new URL("https://epapers.onrender.com/").openStream();
+            new URL(SERVER_URL).openStream();
             log.info("🎵 stayin' alive! 🎵");
         } catch (Exception e) {
             log.error("SOS! I AM DYING! SAVE ME!!!");
@@ -52,7 +54,7 @@ public class AppScheduler {
     public void refreshDB() {
         try {
             log.info("Starting a new day. 😊");
-            new URL("https://epapers.onrender.com/api/epapers/refreshDB").openStream();
+            new URL(SERVER_URL + "/api/epapers/refreshDB").openStream();
             File currDir = new File(".");
             for (File file : currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
                 AppUtils.deleteFile(file);

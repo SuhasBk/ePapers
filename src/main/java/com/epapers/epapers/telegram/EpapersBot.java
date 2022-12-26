@@ -43,7 +43,8 @@ public class EpapersBot extends TelegramLongPollingBot {
 
     private static final String BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
     private static final String BOT_USERNAME = "ePapers";
-    private static final String FILE_ACCESS_URL = "https://epapers.onrender.com/api/file?name=%s";
+    private static final String SERVER_URL = "https://epapers.onrender.com";
+    private static final String FILE_ACCESS_URL = SERVER_URL + "/api/file?name=%s";
     private static final String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
     private static final String EPAPER_KEY_STRING = "epaper";
     private static final String ACCESS_STRING = "Access it using: ";
@@ -155,6 +156,10 @@ public class EpapersBot extends TelegramLongPollingBot {
                                 executeAsync(new SendMessage(chatId, "Awww. Sad to hear that! 😢"));
                             }
                             break;
+                        case "THROWPAPERS":
+                            executeAsync(new SendMessage(chatId, "Brace yourselves. Triggering ePapers to ALL subscribers !!! 🫠"));
+                            this.triggerSubscriptions();
+                            break;
                         default:
                             if (userMessage.startsWith("/DOWNLOAD ")) {
                                 sendPDF(chatId, user, userMessage);
@@ -207,7 +212,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                 }
             } catch(Exception e) {
                 e.printStackTrace();
-                handleErrors(chatId, "Something went wrong while downloading ePaper. 😢\n\n Try downloading it directly from https://epapers.onrender.com");
+                handleErrors(chatId, "Something went wrong while downloading ePaper. 😢\n\n Try downloading it directly from " + SERVER_URL);
             }
         }
     }
@@ -220,7 +225,7 @@ public class EpapersBot extends TelegramLongPollingBot {
             if (!subscribedEditions.isEmpty()) {
                 EpapersSubscription subscription = new EpapersSubscription(chatId, user, subscribedEditions, true);
                 subscriptionService.addSubscription(subscription);
-                executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend '/unsubscribe' any time you wish."));
+                executeAsync(new SendMessage(chatId, "You have successfully subscribed to: " + city + " ePaper. ✅\n\nSend '/unsubscribe' any time you wish to stop receiving papers."));
             } else {
                 executeAsync(new SendMessage(chatId,"Could not find your city 🤔. To see a list of available cities, enter '/HT' or '/TOI'."));
             }
