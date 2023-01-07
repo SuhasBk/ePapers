@@ -1,29 +1,5 @@
 package com.epapers.epapers.service;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.util.AppUtils;
@@ -33,8 +9,21 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
-
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -52,7 +41,7 @@ public class EpaperService {
     private static final String KP_EDITION_LINK = "https://kpepaper.asianetnews.com/download/fullpdflink/newspaper/12222/%s";
     private static final String EPAPER_KEY_STRING = "epaper";
 
-    public List<Edition> getHTEditionList() throws Exception {
+    public List<Edition> getHTEditionList() {
         List<Edition> editions = new ArrayList<>();
         List<Map<String, Object>> json = AppUtils.getHTJsonObject(HT_EDITIONS_URL);
         json.forEach(edition -> {
@@ -76,6 +65,18 @@ public class EpaperService {
         return toiEditions;
     }
 
+    public List<String> getAllEditions() {
+        List<String> ht = getHTEditionList().stream().map(Edition::getEditionName).collect(Collectors.toList());
+        List<String> toi = getTOIEditionList().stream().map(Edition::getEditionName).toList();
+
+        toi.forEach(edition -> {
+            if (!ht.contains(edition)) {
+                ht.add(edition);
+            }
+        });
+        return ht;
+    }
+
     public List<String> getHTSupplementEditions(String mainEdition, String date) {
         List<String> editions = new ArrayList<>();
         log.info("Called getHTSupplementEditions with edition: {} and date: {}", mainEdition, date);
@@ -85,9 +86,8 @@ public class EpaperService {
         return editions;
     }
 
-    public Map<String, String> getEditionFromCity(String city) throws Exception {
+    public Map<String, String> getEditionFromCity(String city) {
         Map<String, String> editions = new HashMap<>();
-
         List<Edition> toiEditions = getTOIEditionList()
                 .stream()
                 .filter(edition -> edition.getEditionName().toUpperCase().contains(city))

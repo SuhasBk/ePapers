@@ -1,13 +1,13 @@
 package com.epapers.epapers.telegram;
 
-import java.io.File;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
-
+import com.epapers.epapers.model.Epaper;
+import com.epapers.epapers.model.EpapersSubscription;
+import com.epapers.epapers.model.EpapersUser;
+import com.epapers.epapers.service.EpaperService;
+import com.epapers.epapers.service.SubscriptionService;
+import com.epapers.epapers.service.UserService;
+import com.epapers.epapers.util.AppUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -18,15 +18,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import com.epapers.epapers.model.Epaper;
-import com.epapers.epapers.model.EpapersSubscription;
-import com.epapers.epapers.model.EpapersUser;
-import com.epapers.epapers.service.EpaperService;
-import com.epapers.epapers.service.SubscriptionService;
-import com.epapers.epapers.service.UserService;
-import com.epapers.epapers.util.AppUtils;
-
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 
 @Component
@@ -82,6 +79,8 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                 try {
                     String userMessage = update.getMessage().getText().toUpperCase();
+                    log.info("\n\nINCOMING MESSAGE: {} FROM USER: {}\n\n", userMessage,
+                            user.getUserName()+"_"+user.getFirstName()+"_"+user.getLastName());
                     StringBuilder editionPrompt = new StringBuilder();
                     switch (userMessage) {
                         case "/HELP":
@@ -186,11 +185,6 @@ public class EpapersBot extends TelegramLongPollingBot {
             String city = (metaData[0].equalsIgnoreCase("bengaluru")) ? BENGALURU_CITY_KANNADA : metaData[0];
             String editionId = metaData[1];
             String publication = metaData[2];
-            EpapersUser epapersUser = new EpapersUser(chatId, user, editionId, city, AppUtils.getTodaysDate() + "_" + new Date().getTime(), 1);
-            if(!userService.canAccess(epapersUser)) {
-                executeAsync(new SendMessage(chatId, "Access denied ❌. Quota Exceeded."));
-                return;
-            }
             executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing " + publication + " ePaper for : " + city + " 🎉"));
             
             try{

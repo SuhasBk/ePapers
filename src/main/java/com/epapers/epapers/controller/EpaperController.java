@@ -1,38 +1,25 @@
 package com.epapers.epapers.controller;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
-
-import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
-import com.epapers.epapers.model.EpapersSubscription;
-import com.epapers.epapers.model.EpapersUser;
 import com.epapers.epapers.service.EpaperService;
 import com.epapers.epapers.service.SubscriptionService;
 import com.epapers.epapers.service.UserService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -53,52 +40,25 @@ public class EpaperController {
     EpapersBot telegramBot;
 
     @GetMapping("/getEditionList")
-    public List<Edition> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
-        if(publication.equals("TOI")) {
-            return ePaperService.getTOIEditionList();
+    public List<Object> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
+        switch(publication) {
+            case "TOI":
+                return Collections.singletonList(ePaperService.getTOIEditionList());
+            case "HT":
+                return Collections.singletonList(ePaperService.getHTEditionList());
+            default:
+                return Collections.singletonList(ePaperService.getAllEditions());
         }
-        return ePaperService.getHTEditionList();
-    }
-
-    @GetMapping("/getTOIEditionList")
-    public List<Edition> getTOIEditionList() {
-        return ePaperService.getTOIEditionList();
-    }
-
-    @GetMapping("/getHTSupplementEditions")
-    public List<String> getHTSupplementEditions(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
-        return ePaperService.getHTSupplementEditions(mainEdition, date.orElse(AppUtils.getTodaysDate()));
-    }
-
-    @GetMapping("/getHTPages")
-    public List<String> getPages(@RequestParam("mainEdition") String mainEdition, @RequestParam("editionDate") Optional<String> date) {
-        List<String> pagesLinks = new ArrayList<>();
-        String todayDate = AppUtils.getTodaysDate();
-        List<String> editions = ePaperService.getHTSupplementEditions(mainEdition, date.orElse(todayDate));
-        editions.forEach(edition -> {
-            try {
-                pagesLinks.addAll(ePaperService.getPages(edition, date.orElse(todayDate)));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-        return pagesLinks;
     }
 
     @PostMapping("/getPDF")
-    public String getPDF(@RequestBody Map<String, Object> payload, HttpServletRequest request) throws Exception {
+    public String getPDF(@RequestBody Map<String, Object> payload) throws Exception {
         String todaysDate = AppUtils.getTodaysDate();
         Epaper pdfDocument;
         String emailId = (String) payload.get("userEmail");
         String mainEdition = (String) payload.get("mainEdition");
         String date = (String) Optional.ofNullable(payload.get("date")).orElse(todaysDate);
         String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);
-        String ipAddress = AppUtils.getIPAddr(request);
-
-        EpapersUser epapersUser = new EpapersUser(ipAddress.split(",")[0], null, mainEdition, mainEdition, todaysDate + new Date().getTime(), 1);
-        if (!userService.canAccess(epapersUser)) {
-            throw new ResponseStatusException(401,"Access denied ❌. Quota Exceeded.", null);
-        }
         
         if(publication == null) {
             throw new ResponseStatusException(400, "Missing 'publication' in payload", null);
@@ -140,17 +100,6 @@ public class EpaperController {
                 .headers(headers)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
-    }
-
-    @GetMapping("/subscribers")
-    public List<EpapersSubscription> getSubscribers() {
-        return subscriptionService.getAllSubscriptions();
-    }
-
-    @GetMapping("/epapers/refreshDB")
-    public String refreshDB() {
-        userService.refreshDB();
-        return "done";
     }
 
     @GetMapping("/trigger")

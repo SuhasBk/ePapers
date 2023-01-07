@@ -13,6 +13,10 @@ h1 {
     font-size: 7vw;
 }
 
+a {
+    color: white;
+}
+
 p {
     font-size: 2vw;
 }
@@ -44,12 +48,19 @@ p {
 
 #editionDate {
     margin: 0 auto;
-    width: 10%;
+    width: 15%;
 }
 
 #userEmail {
     margin: 0 auto;
     width: 25%;
+}
+
+.r-action {
+    position: absolute;
+    top: 2%;
+    right: 2%;
+    z-index: 1;
 }
 
 @media only screen and (max-width: 500px) {

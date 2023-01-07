@@ -6,3 +6,14 @@ spring:
     mongodb:
       uri: ${EPAPERS_MONGO_URI}
       database: ePapers
+  
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${EPAPERS_GIT_CLIENT_ID}
+            client-secret: ${EPAPERS_GIT_CLIENT_SECRET}
+          google:
+            client-id: ${EPAPERS_GOOGLE_CLIENT_ID}
+            client-secret: ${EPAPERS_GOOGLE_CLIENT_SECRET}

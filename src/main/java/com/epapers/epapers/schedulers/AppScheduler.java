@@ -41,7 +41,7 @@ public class AppScheduler {
             log.info("🎵 stayin' alive! 🎵");
         } catch (Exception e) {
             log.error("SOS! I AM DYING! SAVE ME!!!");
-            emailService.mailSOS();      
+            emailService.mailSOS();
         }
     }
 
@@ -54,14 +54,13 @@ public class AppScheduler {
     public void refreshDB() {
         try {
             log.info("Starting a new day. 😊");
-            new URL(SERVER_URL + "/api/epapers/refreshDB").openStream();
             File currDir = new File(".");
             for (File file : currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
                 AppUtils.deleteFile(file);
             }
             log.info("Old files purged successfully!");
         } catch (Exception e) {
-            log.error("Failed to refresh db or delete old files.");
+            log.error("Failed to clear cached files.");
         }
     }
 
