@@ -1,30 +1,20 @@
 package com.epapers.epapers.schedulers;
 
-import java.io.File;
-import java.net.URL;
-import java.util.concurrent.TimeUnit;
-
+import com.epapers.epapers.service.EmailService;
+import com.epapers.epapers.telegram.EpapersBot;
+import com.epapers.epapers.util.AppUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.epapers.epapers.service.EmailService;
-import com.epapers.epapers.service.EpaperService;
-import com.epapers.epapers.service.SubscriptionService;
-import com.epapers.epapers.telegram.EpapersBot;
-import com.epapers.epapers.util.AppUtils;
-
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
 public class AppScheduler {
-
-    @Autowired
-    SubscriptionService subscriptionService;
-
-    @Autowired
-    EpaperService epaperService;
 
     @Autowired
     EpapersBot telegramBot;
@@ -55,7 +45,8 @@ public class AppScheduler {
         try {
             log.info("Starting a new day. 😊");
             File currDir = new File(".");
-            for (File file : currDir.listFiles(file -> file.getName().endsWith(".pdf"))) {
+            File[] pdfFiles = currDir.listFiles(file -> file.getName().endsWith(".pdf"));
+            for (File file : pdfFiles) {
                 AppUtils.deleteFile(file);
             }
             log.info("Old files purged successfully!");

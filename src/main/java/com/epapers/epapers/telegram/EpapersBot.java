@@ -94,9 +94,14 @@ public class EpapersBot extends TelegramLongPollingBot {
                             List<EpapersSubscription> allSubscribers = subscriptionService.getAllSubscriptions();
                             executeAsync(new SendMessage(chatId, allSubscribers.toString()));
                             break;
-                        case "/REFRESH_USERS":
-                            userService.refreshDB();
-                            executeAsync(new SendMessage(chatId, "Cleared User History 👍"));
+                        case "/CLEAR_CACHED":
+                            File currDir = new File(".");
+                            File[] pdfFiles = currDir.listFiles(file -> file.getName().endsWith(".pdf"));
+                            for (File file : pdfFiles) {
+                                log.info("Deleting file: " + file.getName());
+                                AppUtils.deleteFile(file);
+                            }
+                            executeAsync(new SendMessage(chatId, "Cleared Cached Files 👍"));
                             break;
                         case "/HTBNG":
                             executeAsync(new SendMessage(chatId,
