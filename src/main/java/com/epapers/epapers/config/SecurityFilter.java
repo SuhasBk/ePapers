@@ -88,7 +88,9 @@ public class SecurityFilter {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
+        http
+        .csrf()
+        .disable()
         .authorizeHttpRequests(authorize -> authorize
                 .antMatchers(
                         "/signin.html",
@@ -97,14 +99,17 @@ public class SecurityFilter {
                         "/styles/**",
                         "/api/getEditionList**",
                         "/api/register**",
-                        "/api/trigger").permitAll()
-                .anyRequest().authenticated()
+                        "/api/trigger")
+                .permitAll()
+                .anyRequest()
+                .authenticated()
         )
         .oauth2Login(httpSecurityOAuth2LoginConfigurer -> httpSecurityOAuth2LoginConfigurer.loginPage("/signin.html"))
-        .formLogin(form -> form.loginPage("/signin.html")
-        .loginProcessingUrl("/login")
-        .defaultSuccessUrl("/")
-        .failureUrl("/signin.html?error=true"));
+        .formLogin(form -> form
+                .loginPage("/signin.html")
+                .loginProcessingUrl("/login")
+                .defaultSuccessUrl("/")
+                .failureUrl("/signin.html?error=true"));
         return http.build();
     }
 
