@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 //@SpringBootApplication(exclude = org.telegram.telegrambots.starter.TelegramBotStarterConfiguration.class)
- @SpringBootApplication
+@SpringBootApplication
 @EnableMongoRepositories
 @EnableScheduling
 public class EpapersApplication {

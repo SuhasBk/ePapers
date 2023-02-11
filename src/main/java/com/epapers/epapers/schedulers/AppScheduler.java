@@ -24,7 +24,7 @@ public class AppScheduler {
 
     private static final String SERVER_URL = "https://epapers.onrender.com";
 
-    @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
         try {
             new URL(SERVER_URL).openStream();
@@ -35,7 +35,7 @@ public class AppScheduler {
         }
     }
 
-    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
     public void collectGarbage() {
         System.gc();
     }
