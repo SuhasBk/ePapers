@@ -91,7 +91,7 @@ public class EpaperService {
         List<Edition> toiEditions = getTOIEditionList()
                 .stream()
                 .filter(edition -> edition.getEditionName().toUpperCase().contains(city))
-                .collect(Collectors.toList());
+                .toList();
         
         if (!toiEditions.isEmpty()) {
             editions.put("TOI", toiEditions.get(0).getEditionId());
@@ -100,7 +100,7 @@ public class EpaperService {
         List<Edition> htEditions = getHTEditionList()
                 .stream()
                 .filter(edition -> edition.getEditionName().toUpperCase().contains(city))
-                .collect(Collectors.toList());
+                .toList();
         
         if (!htEditions.isEmpty()) {
             editions.put("HT", htEditions.get(0).getEditionId());
@@ -144,7 +144,7 @@ public class EpaperService {
             Image image = Image.getInstance(new URL(imgLink));
             // scale factor based on publication:
             if(imgLink.contains("harnscloud")) {
-                image.scalePercent(27f);    //TOI
+                image.scalePercent(40f);    //TOI
             } else {
                 image.scalePercent(21f);    //HT
             }
@@ -212,7 +212,7 @@ public class EpaperService {
         String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
 
         Map<String, Object> meta = AppUtils.getTOIJsonObject(metaUrl);
-        List<Object> metaData = Arrays.asList(meta.get("DayIndex"));
+        List<Object> metaData = Collections.singletonList(meta.get("DayIndex"));
         List<Object> data = (List<Object>) metaData.get(0);
 
         data.forEach(page -> {
@@ -230,7 +230,7 @@ public class EpaperService {
     public Map<String, Object> getKannadaPrabha() throws Exception {
         Map<String, Object> response = new HashMap<>();
         Epaper epaper = new Epaper(AppUtils.getTodaysDate(), "BNG");
-        String fileDownloadURL = null;
+        String fileDownloadURL;
 
         if(epaper.getFile().exists()) {
             log.info("File already exists, skipping download from servers...");
@@ -256,7 +256,7 @@ public class EpaperService {
 
     public void mailPDF(String emailId, String mainEdition, String date, String publication) {
         new Thread(() -> {
-            Epaper epaper = null;
+            Epaper epaper;
             try {
                 if(publication.equals("HT")) {
                     epaper = (Epaper) getHTpdf(mainEdition, date).get(EPAPER_KEY_STRING);
