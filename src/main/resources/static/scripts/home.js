@@ -4,7 +4,8 @@ var homeModule = {
         'city': document.querySelector("#city"),
         'date': document.querySelector("#editionDate"),
         'userEmail': document.querySelector("#userEmail"),
-        'downloadButton': document.querySelector("#downloadButton")
+        'downloadButton': document.querySelector("#downloadButton"),
+        'spinner': document.querySelector("#spinner")
     },
 
     init: function() {
@@ -70,6 +71,7 @@ var download = () => {
     }
 
     homeModule.dom.downloadButton.setAttribute("disabled", true);
+    homeModule.dom.spinner.style.display = 'inline-block';
 
     fetch(`${BACKEND_URL}/api/getPDF`, {
         headers: {

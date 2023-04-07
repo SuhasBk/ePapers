@@ -63,6 +63,23 @@ p {
     z-index: 1;
 }
 
+#spinner {
+    display: none;
+    height: 10px;
+    width: 10px;
+    border-radius: 50%;
+    animation: spin 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes spin {
+    0% {
+        background-color: white;
+    }
+    100% {
+        background-color: green;
+    }
+}
+
 @media only screen and (max-width: 500px) {
     .footer {
         font-size: 3vw;
