@@ -10,6 +10,10 @@ import java.util.Properties;
 
 @Configuration
 public class AppConfig {
+
+    public final static Float HT_SCALE_PERCENT = 21f;
+    public final static Float TOI_SCALE_PERCENT = 29f;
+
     @Bean
     public JavaMailSender getJavaMailSender() {
         String username = System.getenv("EMAIL_ID");
@@ -32,7 +36,7 @@ public class AppConfig {
     }
 
     @Bean
-    BCryptPasswordEncoder encoder() {
+    public BCryptPasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
     }
 }

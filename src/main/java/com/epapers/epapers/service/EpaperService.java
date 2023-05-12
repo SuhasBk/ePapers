@@ -1,5 +1,6 @@
 package com.epapers.epapers.service;
 
+import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.util.AppUtils;
@@ -144,9 +145,9 @@ public class EpaperService {
             Image image = Image.getInstance(new URL(imgLink));
             // scale factor based on publication:
             if(imgLink.contains("harnscloud")) {
-                image.scalePercent(40f);    //TOI
+                image.scalePercent(AppConfig.TOI_SCALE_PERCENT);    //TOI
             } else {
-                image.scalePercent(21f);    //HT
+                image.scalePercent(AppConfig.HT_SCALE_PERCENT);    //HT
             }
             return image;
         }));
