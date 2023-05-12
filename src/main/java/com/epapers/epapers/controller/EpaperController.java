@@ -104,7 +104,7 @@ public class EpaperController {
 
     @GetMapping("/trigger")
     public ResponseEntity<String> trigger() {
-        telegramBot.triggerSubscriptions();
+        telegramBot.triggerSubscriptions(false);
         return ResponseEntity.ok().body("triggered!");
     }
 }

@@ -58,6 +58,6 @@ public class AppScheduler {
 
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
     public void telegramSubscriptions() {
-        telegramBot.triggerSubscriptions();
+        telegramBot.triggerSubscriptions(false);
     }
 }
