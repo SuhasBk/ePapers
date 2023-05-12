@@ -1,5 +1,6 @@
 package com.epapers.epapers.schedulers;
 
+import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.service.EmailService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
@@ -22,7 +23,7 @@ public class AppScheduler {
     @Autowired
     EmailService emailService;
 
-    private static final String SERVER_URL = "https://epapers.onrender.com";
+    private static final String SERVER_URL = AppConfig.HOSTNAME;
 
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {

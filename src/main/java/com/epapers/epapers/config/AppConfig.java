@@ -6,6 +6,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.util.Optional;
 import java.util.Properties;
 
 @Configuration
@@ -13,6 +14,7 @@ public class AppConfig {
 
     public final static Float HT_SCALE_PERCENT = 21f;
     public final static Float TOI_SCALE_PERCENT = 29f;
+    public final static String HOSTNAME = Optional.ofNullable(System.getenv("EPAPERS_HOSTNAME")).orElse("http://localhost:8000");
 
     @Bean
     public JavaMailSender getJavaMailSender() {

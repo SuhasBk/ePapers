@@ -1,5 +1,6 @@
 package com.epapers.epapers.telegram;
 
+import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.EpapersSubscription;
 import com.epapers.epapers.model.EpapersUser;
@@ -40,7 +41,7 @@ public class EpapersBot extends TelegramLongPollingBot {
 
     private static final String BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
     private static final String BOT_USERNAME = "ePapers";
-    private static final String SERVER_URL = "https://epapers.onrender.com";
+    private static final String SERVER_URL = AppConfig.HOSTNAME;
     private static final String FILE_ACCESS_URL = SERVER_URL + "/api/file?name=%s";
     private static final String BENGALURU_CITY_KANNADA = "ನಮ್ಮ ಬೆಂಗಳೂರು 🤘";
     private static final String EPAPER_KEY_STRING = "epaper";
