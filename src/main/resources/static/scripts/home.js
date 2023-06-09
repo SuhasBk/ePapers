@@ -34,8 +34,8 @@ var choosePublication = (e) => {
         data[0].forEach((city) => {
             let select = homeModule.dom.city;
             let option = document.createElement("option");
-            option.text = city.editionName;
-            option.value = city.editionId;
+            option.text = city.EditionDisplayName;
+            option.value = city.EditionId;
 
             // default Namma Bengaluru!
             if (option.value == '102' || option.value == 'toibgc') {

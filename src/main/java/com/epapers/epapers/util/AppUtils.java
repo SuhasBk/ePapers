@@ -1,14 +1,17 @@
 package com.epapers.epapers.util;
 
-import java.awt.Graphics2D;
+import com.epapers.epapers.model.Epaper;
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.pdf.*;
+import com.itextpdf.kernel.pdf.xobject.PdfImageXObject;
+import lombok.extern.slf4j.Slf4j;
+
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,89 +19,19 @@ import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
-import com.epapers.epapers.model.Epaper;
-import com.google.gson.Gson;
-import com.itextpdf.io.image.ImageDataFactory;
-import com.itextpdf.kernel.pdf.PdfDictionary;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfName;
-import com.itextpdf.kernel.pdf.PdfPage;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfStream;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.kernel.pdf.xobject.PdfImageXObject;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@SuppressWarnings("unchecked")
 public class AppUtils {
 
     private AppUtils() {}
 
-    private static final Gson gson = new Gson();
-
-    public static final String TOI_EDITIONS = "[ { \"editionName\": \"Ahmedabad\", \"editionId\": \"toiac\" }, { \"editionName\": \"Bengaluru\", \"editionId\": \"toibgc\" }, { \"editionName\": \"Bhopal\", \"editionId\": \"toibhoc\" }, { \"editionName\": \"Chandigarh\", \"editionId\": \"toicgct\" }, { \"editionName\": \"Chennai\", \"editionId\": \"toich\" }, { \"editionName\": \"Delhi\", \"editionId\": \"cap\" }, { \"editionName\": \"Goa\", \"editionId\": \"toigo\" }, { \"editionName\": \"Hyderabad\", \"editionId\": \"toih\" }, { \"editionName\": \"Jaipur\", \"editionId\": \"toijc\" }, { \"editionName\": \"Kochi\", \"editionId\": \"toikrko\" }, { \"editionName\": \"Kolkata\", \"editionId\": \"toikc\" }, { \"editionName\": \"Lucknow\", \"editionId\": \"toilc\" }, { \"editionName\": \"Mumbai\", \"editionId\": \"toim\" }, { \"editionName\": \"Pune\", \"editionId\": \"toipuc\" } ]";
+    public static final String TOI_EDITIONS = "[ { \"EditionDisplayName\": \"Ahmedabad\", \"EditionId\": \"toiac\" }, { \"EditionDisplayName\": \"Bengaluru\", \"EditionId\": \"toibgc\" }, { \"EditionDisplayName\": \"Bhopal\", \"EditionId\": \"toibhoc\" }, { \"EditionDisplayName\": \"Chandigarh\", \"EditionId\": \"toicgct\" }, { \"EditionDisplayName\": \"Chennai\", \"EditionId\": \"toich\" }, { \"EditionDisplayName\": \"Delhi\", \"EditionId\": \"cap\" }, { \"EditionDisplayName\": \"Goa\", \"EditionId\": \"toigo\" }, { \"EditionDisplayName\": \"Hyderabad\", \"EditionId\": \"toih\" }, { \"EditionDisplayName\": \"Jaipur\", \"EditionId\": \"toijc\" }, { \"EditionDisplayName\": \"Kochi\", \"EditionId\": \"toikrko\" }, { \"EditionDisplayName\": \"Kolkata\", \"EditionId\": \"toikc\" }, { \"EditionDisplayName\": \"Lucknow\", \"EditionId\": \"toilc\" }, { \"EditionDisplayName\": \"Mumbai\", \"EditionId\": \"toim\" }, { \"EditionDisplayName\": \"Pune\", \"EditionId\": \"toipuc\" } ]";
 
     public static String getTodaysDate() {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         String todaysDate = dtf.format(ZonedDateTime.now(ZoneId.of("Asia/Kolkata")));
         log.info("Today's date (default) is : {}", todaysDate);
         return todaysDate;
-    }
-
-    public static List<Map<String, Object>> getHTJsonObject(String urlString) {
-        List<Map<String, Object>> response = new ArrayList<>();
-        log.info("Accessing HT url : {}", urlString);
-        try (InputStreamReader reader = new InputStreamReader(new URL(urlString).openStream())) {
-            response = gson.fromJson(reader, List.class);
-        } catch (Exception e) {
-            log.error("HT IS DOWN:\n{}\nURL: {}", e, urlString);
-        }
-
-        if(response.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "I am guessing yesterday was a holiday for journalists, they must be chilling today, try tomorrow!\n\nIf it still ain't working, then adiós, we are done here...");
-        }
-        return response;
-    }
-
-    public static Map<String, Object> getTOIJsonObject(String urlString) throws Exception {
-        Map<String, Object> response = new HashMap<>();
-        try (InputStreamReader reader = new InputStreamReader(new URL(urlString).openStream())) {
-            response = gson.fromJson(reader, Map.class);
-        } catch (Exception e) {
-            log.error("Oops, something is wrong!", e);
-        }
-
-        if (response.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "I am guessing yesterday was a holiday for journalists, they must be chilling today, try tomorrow!\n\nIf it still ain't working, then adiós, we are done here...");
-        }
-        return response;
-    }
-
-    public static Map<String, Object> getKPJsonObject(String urlString) throws Exception {
-        Map<String, Object> response = new HashMap<>();
-        try (InputStreamReader reader = new InputStreamReader(new URL(urlString).openStream())) {
-            response = gson.fromJson(reader, Map.class);
-        } catch (Exception e) {
-            log.error("Oops, something is wrong!", e);
-        }
-
-        if (response.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "I am guessing yesterday was a holiday for journalists, they must be chilling today, try tomorrow!\n\nIf it still ain't working, then adiós, we are done here...");
-        }
-        return response;
     }
 
     public static void compressPDF(Epaper epaper) throws Exception {

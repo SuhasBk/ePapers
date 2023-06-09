@@ -6,13 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-@Data
+@AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@AllArgsConstructor
-public class Edition {
-    @JsonProperty("EditionId")
-    String editionId;
-    @JsonProperty("EditionDisplayName")
-    String editionName;
+@Data
+public class HTPage {
+    @JsonProperty("HighResolution")
+    String highResolution;
+    @JsonProperty("LowResolution")
+    String lowResolution;
 }

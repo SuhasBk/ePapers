@@ -7,6 +7,7 @@ import com.epapers.epapers.service.UserService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
@@ -31,24 +32,18 @@ public class EpaperController {
     EpaperService ePaperService;
 
     @Autowired
-    SubscriptionService subscriptionService;
-
-    @Autowired
-    UserService userService;
-
-    @Autowired
     EpapersBot telegramBot;
 
     @GetMapping("/getEditionList")
     public List<Object> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
-        switch(publication) {
-            case "TOI":
-                return Collections.singletonList(ePaperService.getTOIEditionList());
-            case "HT":
-                return Collections.singletonList(ePaperService.getHTEditionList());
-            default:
-                return Collections.singletonList(ePaperService.getAllEditions());
-        }
+        return switch (publication) {
+            case "TOI" ->
+                    Collections.singletonList(ePaperService.getTOIEditionList());
+            case "HT" ->
+                    Collections.singletonList(ePaperService.getHTEditionList());
+            default ->
+                    Collections.singletonList(ePaperService.getAllEditions());
+        };
     }
 
     @PostMapping("/getPDF")
@@ -58,10 +53,10 @@ public class EpaperController {
         String emailId = (String) payload.get("userEmail");
         String mainEdition = (String) payload.get("mainEdition");
         String date = (String) Optional.ofNullable(payload.get("date")).orElse(todaysDate);
-        String publication = (String) Optional.ofNullable(payload.get("publication")).orElse(null);
+        String publication = (String) payload.get("publication");
         
         if(publication == null) {
-            throw new ResponseStatusException(400, "Missing 'publication' in payload", null);
+            throw new ResponseStatusException(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Missing 'publication' in payload", null);
         }
 
         if(publication.equals("HT")) {
@@ -69,14 +64,6 @@ public class EpaperController {
         } else {
             pdfDocument = (Epaper) ePaperService.getTOIpdf(mainEdition, date).get("epaper");
         }
-
-        /* ByteArrayResource resource = new ByteArrayResource(Files.readAllBytes(pdfDocument.getFile().toPath()));
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + pdfDocument.getFile().getName());
-        ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(resource); */
         
         if (emailId != null && !emailId.isEmpty()) {
             ePaperService.mailPDF(emailId, mainEdition, date, publication);

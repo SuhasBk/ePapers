@@ -1,8 +1,7 @@
 package com.epapers.epapers.service;
 
 import com.epapers.epapers.config.AppConfig;
-import com.epapers.epapers.model.Edition;
-import com.epapers.epapers.model.Epaper;
+import com.epapers.epapers.model.*;
 import com.epapers.epapers.util.AppUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,8 +15,11 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -34,6 +36,9 @@ public class EpaperService {
     @Autowired
     EmailService emailService;
 
+    @Autowired
+    WebClient webClient;
+
     private static final String HT_BASE_URL = "https://epaper.hindustantimes.com";
     private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
     private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
@@ -43,14 +48,20 @@ public class EpaperService {
     private static final String EPAPER_KEY_STRING = "epaper";
 
     public List<Edition> getHTEditionList() {
-        List<Edition> editions = new ArrayList<>();
-        List<Map<String, Object>> json = AppUtils.getHTJsonObject(HT_EDITIONS_URL);
-        json.forEach(edition -> {
-            Edition editionInfo = new Edition(Double.valueOf(edition.get("EditionId").toString()).intValue()+"", edition.get("EditionDisplayName").toString());
-            editions.add(editionInfo);
-        });
-        log.info("HT Edition list: {}", editions);
-        return editions;
+        log.info("Accessing HT url : {}", HT_EDITIONS_URL);
+        Edition[] editions = webClient
+                .get()
+                .uri(HT_EDITIONS_URL)
+                .retrieve()
+                .bodyToMono(Edition[].class)
+                .doOnError(err -> {throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "HT is down " + err.toString());})
+                .block();
+
+        if(editions == null || editions.length == 0) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "I am guessing yesterday was a holiday for journalists, they must be chilling today, try tomorrow!\n\nIf it still ain't working, then adiós, we are done here...");
+        }
+
+        return Arrays.stream(editions).toList();
     }
 
     public List<Edition> getTOIEditionList() {
@@ -81,9 +92,21 @@ public class EpaperService {
     public List<String> getHTSupplementEditions(String mainEdition, String date) {
         List<String> editions = new ArrayList<>();
         log.info("Called getHTSupplementEditions with edition: {} and date: {}", mainEdition, date);
-        String url = String.format("%1$s/Home/GetAllSupplement?edid=%2$s&EditionDate=%3$s", HT_BASE_URL, mainEdition, date.replace("/", "%2F"));
-        List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
-        json.forEach(edition -> editions.add(edition.get("EditionId").toString()));
+
+        String url = String.format("%1$s/Home/GetAllSupplement?edid=%2$s&EditionDate=%3$s", HT_BASE_URL, mainEdition, date);
+        Edition[] htSupplements = webClient
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(Edition[].class)
+                .block();
+
+        if(htSupplements != null && htSupplements.length != 0) {
+            editions = Arrays.stream(htSupplements).toList()
+                    .stream()
+                    .map(Edition::getEditionId)
+                    .toList();
+        }
         return editions;
     }
 
@@ -113,20 +136,27 @@ public class EpaperService {
     public List<String> getPages(String edition, String date) {
         List<String> links = new ArrayList<>();
         log.info("Called getPages with edition: {} and date: {}", edition, date);
-        String url = String.format("%1$s/Home/GetAllpages?editionid=%2$s&editiondate=%3$s", HT_BASE_URL, edition, date.replace("/", "%2F"));
-        List<Map<String, Object>> json = AppUtils.getHTJsonObject(url);
-        json.forEach(page -> links.add(page.get("HighResolution").toString().replace("_mr", "")));
+        String url = String.format("%1$s/Home/GetAllpages?editionid=%2$s&editiondate=%3$s", HT_BASE_URL, edition, date);
+
+         HTPage[] htPages = webClient
+                .get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(HTPage[].class)
+                .block();
+
+         if(htPages != null && htPages.length != 0) {
+             Arrays.stream(htPages).toList().forEach(page -> links.add(page.getHighResolution().replace("_mr", "")));
+         }
+
         return links;
     }
 
     public Epaper getPDF(List<String> links, String edition, String date) throws Exception {
         log.info("Starting downloads for edition: {}", edition);
-
         // prepare the File object
         Epaper epaper = new Epaper(date.replace("/", "_"), edition);
-
         File file = epaper.getFile();
-
         if(file.exists()) {
             log.info("File already exists, skipping download from servers...");
             return epaper;
@@ -137,18 +167,13 @@ public class EpaperService {
         List<Callable<Image>> callableList = new ArrayList<>();
         List<Future<Image>> futureList;
         Document document = new Document();
-
         PdfWriter.getInstance(document, new FileOutputStream(file));
-        document.open();
 
+        document.open();
         links.forEach(imgLink -> callableList.add(() -> {
             Image image = Image.getInstance(new URL(imgLink));
             // scale factor based on publication:
-            if(imgLink.contains("harnscloud")) {
-                image.scalePercent(AppConfig.TOI_SCALE_PERCENT);    //TOI
-            } else {
-                image.scalePercent(AppConfig.HT_SCALE_PERCENT);    //HT
-            }
+            image.scalePercent(imgLink.contains("harnscloud") ? AppConfig.TOI_SCALE_PERCENT : AppConfig.HT_SCALE_PERCENT);
             return image;
         }));
 
@@ -200,7 +225,6 @@ public class EpaperService {
         return response;
     }
 
-    @SuppressWarnings("unchecked")
     public Map<String, Object> getTOIpdf(String mainEdition, String date) throws Exception {
         Map<String, Object> response = new HashMap<>();
         List<String> pagesLinks = new ArrayList<>();
@@ -212,23 +236,25 @@ public class EpaperService {
         String year = dateSplit[2];
         String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
 
-        Map<String, Object> meta = AppUtils.getTOIJsonObject(metaUrl);
-        List<Object> metaData = Collections.singletonList(meta.get("DayIndex"));
-        List<Object> data = (List<Object>) metaData.get(0);
+        TOIPages pages = webClient
+                .get()
+                .uri(metaUrl)
+                .retrieve()
+                .bodyToMono(TOIPages.class)
+                .block();
 
-        data.forEach(page -> {
-            Map<String, String> pageData = (Map<String, String>) page;
-            String pageUrl = String.format("%s%s/%s/%s/%s/Page/%s_%s_%s.jpg", TOI_BASE_URL, mainEdition, year, month, day, date.replace("/", "_"), pageData.get("DisplayPageNumber"), mainEdition);
-            pagesLinks.add(pageUrl);
-        });
-
-        final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-        response.put(EPAPER_KEY_STRING, epaper);
+        if(pages != null) {
+            pages.getDayIndex().forEach(pageData -> {
+                String pageUrl = String.format("%s%s/%s/%s/%s/Page/%s.jpg", TOI_BASE_URL, mainEdition, year, month, day, pageData.get("PageName"));
+                pagesLinks.add(pageUrl);
+            });
+            final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
+            response.put(EPAPER_KEY_STRING, epaper);
+        }
         return response;
     }
 
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getKannadaPrabha() throws Exception {
+    public Map<String, Object> getKannadaPrabha() {
         Map<String, Object> response = new HashMap<>();
         Epaper epaper = new Epaper(AppUtils.getTodaysDate(), "BNG");
         String fileDownloadURL;
@@ -239,17 +265,24 @@ public class EpaperService {
             return response;
         }
 
-        Elements allDivs = Jsoup.connect(KP_BASE_URL).get().getElementsByClass("papr-card");
-        Element todayDiv = Optional.ofNullable(allDivs.first()).orElseThrow().parent();
-        String edition = Optional.ofNullable(todayDiv).orElseThrow().attr("href").split("/r/")[1];
+        try {
+            Elements allDivs = Jsoup.connect(KP_BASE_URL).get().getElementsByClass("papr-card");
+            Element todayDiv = Optional.ofNullable(allDivs.first()).orElseThrow().parent();
+            String edition = Optional.ofNullable(todayDiv).orElseThrow().attr("href").split("/r/")[1];
+            KPPage kpPage = webClient
+                    .get()
+                    .uri(String.format(KP_EDITION_LINK, edition))
+                    .retrieve()
+                    .bodyToMono(KPPage.class)
+                    .block();
 
-        Map<String, Object> kpResponse = AppUtils.getKPJsonObject(String.format(KP_EDITION_LINK, edition));
-        if (!(Boolean) kpResponse.get("status")) {
-            return null;
+            if(kpPage != null) {
+                fileDownloadURL = kpPage.getData().get("fullpdf");
+                AppUtils.downloadFileFromUrl(Optional.ofNullable(fileDownloadURL).orElseThrow(), epaper.getFile());
+            }
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "KP is down");
         }
-        fileDownloadURL = ((Map<String, String>) kpResponse.get("data")).get("fullpdf");
-        
-        AppUtils.downloadFileFromUrl(Optional.ofNullable(fileDownloadURL).orElseThrow(), epaper.getFile());
 
         response.put(EPAPER_KEY_STRING, epaper);
         return response;
