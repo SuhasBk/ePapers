@@ -2,12 +2,16 @@ package com.epapers.epapers.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
+import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -17,6 +21,7 @@ public class AppConfig {
     public final static Float HT_SCALE_PERCENT = 21f;
     public final static Float TOI_SCALE_PERCENT = 29f;
     public final static String HOSTNAME = Optional.ofNullable(System.getenv("EPAPERS_HOSTNAME")).orElse("http://localhost:8000");
+    public final static String TELEGRAM_BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
 
     @Bean
     public JavaMailSender getJavaMailSender() {
@@ -46,11 +51,20 @@ public class AppConfig {
 
     @Bean
     public WebClient webClient() {
+        ConnectionProvider provider = ConnectionProvider.builder("fixed")
+                .maxConnections(500)
+                .maxIdleTime(Duration.ofSeconds(20))
+                .maxLifeTime(Duration.ofSeconds(60))
+                .pendingAcquireTimeout(Duration.ofSeconds(60))
+                .evictInBackground(Duration.ofSeconds(120)).build();
+
         final int size = 16 * 1024 * 1024;
         final ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
                 .build();
+
         return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(HttpClient.create(provider)))
                 .exchangeStrategies(strategies)
                 .build();
     }

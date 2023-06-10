@@ -39,7 +39,7 @@ public class EpapersBot extends TelegramLongPollingBot {
     @Autowired
     SubscriptionService subscriptionService;
 
-    private static final String BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
+    private static final String BOT_TOKEN = AppConfig.TELEGRAM_BOT_TOKEN;
     private static final String BOT_USERNAME = "ePapers";
     private static final String SERVER_URL = AppConfig.HOSTNAME;
     private static final String FILE_ACCESS_URL = SERVER_URL + "/api/file?name=%s";
