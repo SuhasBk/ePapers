@@ -2,8 +2,6 @@ package com.epapers.epapers.controller;
 
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.service.EpaperService;
-import com.epapers.epapers.service.SubscriptionService;
-import com.epapers.epapers.service.UserService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 import lombok.extern.slf4j.Slf4j;
