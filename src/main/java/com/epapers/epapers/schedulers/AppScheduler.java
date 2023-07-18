@@ -1,17 +1,19 @@
 package com.epapers.epapers.schedulers;
 
+import java.io.File;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+
 import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.service.EmailService;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.net.URL;
-import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -23,17 +25,33 @@ public class AppScheduler {
     @Autowired
     EmailService emailService;
 
+    @Autowired
+    WebClient webClient;
+
     private static final String SERVER_URL = AppConfig.HOSTNAME;
 
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
-        try {
-            new URL(SERVER_URL).openStream();
-            log.info("🎵 stayin' alive! 🎵");
-        } catch (Exception e) {
-            log.error("SOS! I AM DYING! SAVE ME!!!");
-            emailService.mailSOS();
-        }
+        // try {
+        //     new URL(SERVER_URL).openStream();
+        //     log.info("🎵 stayin' alive! 🎵");
+        // } catch (Exception e) {
+        //     log.error("SOS! I AM DYING! SAVE ME!!!");
+        //     emailService.mailSOS();
+        // }
+        webClient
+            .get()
+            .uri(SERVER_URL)
+            .retrieve()
+            .toBodilessEntity()
+            .doOnSuccess(resp -> {
+                log.info("🎵 stayin' alive! 🎵");
+            })
+            .doOnError(err -> {
+                log.error("SOS! I AM DYING! SAVE ME!!!");
+                emailService.mailSOS();
+            })
+            .block();
     }
 
     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)

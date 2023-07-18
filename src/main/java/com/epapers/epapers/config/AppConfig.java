@@ -51,6 +51,7 @@ public class AppConfig {
 
     @Bean
     public WebClient webClient() {
+        // configure pooling strategy, max connections, connection availability with eviction
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
                 .maxConnections(500)
                 .maxIdleTime(Duration.ofSeconds(20))
@@ -58,11 +59,13 @@ public class AppConfig {
                 .pendingAcquireTimeout(Duration.ofSeconds(60))
                 .evictInBackground(Duration.ofSeconds(120)).build();
 
-        final int size = 16 * 1024 * 1024;
+        // configure in-memory size for http request and response bodies, if it exceeds, write to disk:
+        final int size = 16 * 1024 * 1024;  // 16MB
         final ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
                 .build();
 
+        // return custom webclient instance with defined config
         return WebClient.builder()
                 .clientConnector(new ReactorClientHttpConnector(HttpClient.create(provider)))
                 .exchangeStrategies(strategies)
