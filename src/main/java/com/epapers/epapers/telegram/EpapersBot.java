@@ -124,7 +124,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                         case "/KP" -> {
                             executeAsync(new SendMessage(chatId,
                                     "🎉 Cool! Preparing KP ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
-                            Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabha().get(EPAPER_KEY_STRING);
+                            Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabhaNew().get(EPAPER_KEY_STRING);
                             executeAsync(new SendMessage(chatId,
                                     ACCESS_STRING + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName())));
                             executeAsync(new SendDocument(chatId, new InputFile(kpPdf.getFile())));
@@ -275,14 +275,14 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                 if (htEdition != null) {
                     try {
-                        Epaper htPdf = (Epaper) ePaperService.getHTpdf(htEdition, today).get("epaper");
+                        Epaper htPdf = (Epaper) ePaperService.getHTpdf(htEdition, today).get(EPAPER_KEY_STRING);
                         if (!cacheOnly) {
                             sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
                         }
 
                         if (htEdition.equals("102")) {
                             log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
-                            Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabha().get("epaper");
+                            Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabhaNew().get(EPAPER_KEY_STRING);
                             if (!cacheOnly) {
                                 sendSubscriptionMessage(chatId,"Access today's bonus KP ePaper here: "+ String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()),kpPdf.getFile());
                             }
@@ -294,7 +294,7 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                 if (toiEdition != null) {
                     try {
-                        Epaper toiPdf = (Epaper) ePaperService.getTOIpdf(toiEdition, today).get("epaper");
+                        Epaper toiPdf = (Epaper) ePaperService.getTOIpdf(toiEdition, today).get(EPAPER_KEY_STRING);
                         if(!cacheOnly) {
                             sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
                         }

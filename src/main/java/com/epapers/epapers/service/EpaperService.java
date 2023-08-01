@@ -1,15 +1,21 @@
 package com.epapers.epapers.service;
 
-import com.epapers.epapers.config.AppConfig;
-import com.epapers.epapers.model.*;
-import com.epapers.epapers.util.AppUtils;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.pdf.PdfWriter;
-import lombok.extern.slf4j.Slf4j;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -21,12 +27,22 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import com.epapers.epapers.config.AppConfig;
+import com.epapers.epapers.model.Edition;
+import com.epapers.epapers.model.Epaper;
+import com.epapers.epapers.model.HTPage;
+import com.epapers.epapers.model.KPPage;
+import com.epapers.epapers.model.KPPageNew;
+import com.epapers.epapers.model.TOIPages;
+import com.epapers.epapers.util.AppUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Image;
+import com.itextpdf.text.pdf.PdfWriter;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Transactional
@@ -45,6 +61,8 @@ public class EpaperService {
     private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
     private static final String KP_BASE_URL = "https://kpepaper.asianetnews.com/t/12222";
     private static final String KP_EDITION_LINK = "https://kpepaper.asianetnews.com/download/fullpdflink/newspaper/12222/%s";
+    private static final String KP_BNG_PAGES_LINK = "http://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=21";
+    private static final String KP_IMAGE_BASE_URL = "http://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
     private static final String EPAPER_KEY_STRING = "epaper";
 
     public List<Edition> getHTEditionList() {
@@ -171,9 +189,18 @@ public class EpaperService {
 
         document.open();
         links.forEach(imgLink -> callableList.add(() -> {
-            Image image = Image.getInstance(new URL(imgLink));
             // scale factor based on publication:
-            image.scalePercent(imgLink.contains("harnscloud") ? AppConfig.TOI_SCALE_PERCENT : AppConfig.HT_SCALE_PERCENT);
+            final float scaleFactor;
+            if(imgLink.contains("harnscloud")) {
+                scaleFactor = AppConfig.TOI_SCALE_PERCENT;
+            } else if (imgLink.contains("enewspapr")) {
+                scaleFactor = 70f;
+            } else {
+                scaleFactor = AppConfig.HT_SCALE_PERCENT;
+            }
+
+            Image image = Image.getInstance(new URL(imgLink));
+            image.scalePercent(scaleFactor);
             return image;
         }));
 
@@ -251,6 +278,42 @@ public class EpaperService {
             final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
             response.put(EPAPER_KEY_STRING, epaper);
         }
+        return response;
+    }
+    
+    public Map<String, Object> getKannadaPrabhaNew() throws Exception {
+        String date = AppUtils.getTodaysDate();
+        Map<String, Object> response = new HashMap<>();
+        // Epaper epaper = new Epaper(date, "BNG");
+        List<String> pagesLinks = new ArrayList<>();
+        KPPageNew[] pages = null;
+        log.info("Called getKP with date: {}", date);
+        
+        String[] dateSplit = date.split("/");
+        String day = dateSplit[0];
+        String month = dateSplit[1];
+        String year = dateSplit[2];
+
+        String metaUrl = String.format(KP_BNG_PAGES_LINK, year+month+day);
+
+        String links = webClient
+            .get()
+            .uri(metaUrl)
+            .retrieve()
+            .toEntity(String.class)
+            .block()
+            .getBody();
+        
+        pages = new ObjectMapper().readValue(links, KPPageNew[].class);
+        
+        if (pages != null) {
+            for(int i = 0; i<pages.length; i++) {
+                String pageUrl = String.format(KP_IMAGE_BASE_URL, year, month, day, pages[i].getImagename());
+                pagesLinks.add(pageUrl);
+            }
+            final Epaper epaper = getPDF(pagesLinks, "BNG", date);
+            response.put(EPAPER_KEY_STRING, epaper);
+        }        
         return response;
     }
 
