@@ -50,6 +50,22 @@ public class EmailService {
         }
     }
 
+    public void notifyUserActivity(String content) {
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper;
+
+        try {
+            helper = new MimeMessageHelper(message, true);
+            helper.setFrom("ePapers <noreply@epapers.com>");
+            helper.setTo("kowligi1998@gmail.com");
+            helper.setSubject("Following App Activity Detected 🙌");
+            helper.setText(content);
+            emailSender.send(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void mailSOS() {
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper;
@@ -74,6 +90,5 @@ public class EmailService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }

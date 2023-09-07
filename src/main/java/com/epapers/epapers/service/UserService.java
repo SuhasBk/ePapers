@@ -26,6 +26,9 @@ public class UserService {
     EpaperService epaperService;
 
     @Autowired
+    EmailService emailService;
+
+    @Autowired
     BCryptPasswordEncoder encoder;
 
     public Map<String, String> saveNewUser(EpapersUser user) {
@@ -53,6 +56,24 @@ public class UserService {
                 user.setPassword(encoder.encode(Optional.ofNullable(user.getPassword()).orElse("")));
                 userRepository.save(user);
                 log.info("\nUSER ADDED SUCCESSFULLY: {}\n", user);
+                long usersCount = userRepository.count();
+                emailService.notifyUserActivity(
+                    String.format("""
+                        New User Registered (non-OAuth)! 🤔
+
+                        Name: %s.
+
+                        Email ID: %s.
+
+                        City: %s.
+
+                        Total subscriber count: %d
+                        """,
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getCity(),
+                        usersCount)
+                );
             } catch(Exception e) {
                 log.error("\nFAILED TO SAVE USER: {}\n", user);
                 response.put("status", "false");

@@ -1,6 +1,7 @@
 package com.epapers.epapers.config;
 
 import com.epapers.epapers.model.EpapersUser;
+import com.epapers.epapers.service.EmailService;
 import com.epapers.epapers.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,9 @@ public class SecurityFilter {
     @Autowired
     UserService userService;
 
+    @Autowired
+    EmailService emailService;
+
     @Bean
     public OAuth2UserService<OidcUserRequest, OidcUser> oidcUserService() {
         final OidcUserService delegate = new OidcUserService();
@@ -43,6 +47,17 @@ public class SecurityFilter {
             String username = Optional.ofNullable(oidcUser.getPreferredUsername()).orElse(email);
 
             if(userService.userExists(username)) {
+                emailService.notifyUserActivity(
+                    String.format("""
+                    New User Signing In! (OAuth) 😊
+
+                    Name: %s.
+
+                    Email ID: %s.
+                    """,
+                    oidcUser.getFullName(),
+                    email)
+                );
                 return oidcUser;
             }
 
@@ -66,6 +81,17 @@ public class SecurityFilter {
             String email = user.getAttribute("email");
 
             if(userService.userExists(username)) {
+                emailService.notifyUserActivity(
+                    String.format("""
+                    New User Signing In! (OAuth) 😊
+
+                    Name: %s.
+
+                    Email ID: %s.
+                    """,
+                    username,
+                    email)
+                );
                 return user;
             }
 

@@ -17,9 +17,30 @@ public class SubscriptionService {
     @Autowired
     SubscriptionRepository subscriptionRepository;
 
+    @Autowired
+    EmailService emailService;
+
     public void addSubscription(EpapersSubscription subscription) {
         subscriptionRepository.save(subscription);
+        long subscriberCount = subscriptionRepository.count();
         log.info("Subscribed successfully - {}", subscription);
+        emailService.notifyUserActivity(
+            String.format("""
+                New User Subscribed! 😬
+
+                Name: %s.
+
+                Chat ID: %s.
+
+                Username: %s.
+
+                Total subscriber count: %d
+                """, 
+                subscription.getUser().getFirstName() + ", " + subscription.getUser().getLastName(),
+                subscription.getChatId(),
+                subscription.getUser().getUserName(),
+                subscriberCount)
+        );
     }
 
     public boolean removeSubscription(String chatId) {
@@ -32,6 +53,24 @@ public class SubscriptionService {
             subscription.setIsActive(false);
             subscriptionRepository.save(subscription);
             log.info("Unsubscribed successfully - {}", subscription);
+            long subscriberCount = subscriptionRepository.count();
+            emailService.notifyUserActivity(
+                String.format("""
+                    User unsubscribed! 🥲
+
+                    Name: %s.
+
+                    Chat ID: %s.
+
+                    Username: %s.
+
+                    Total subscriber count: %d
+                    """, 
+                    subscription.getUser().getFirstName() + ", " + subscription.getUser().getLastName(),
+                    subscription.getChatId(),
+                    subscription.getUser().getUserName(),
+                    subscriberCount)
+            );
         }
         return result;
     }

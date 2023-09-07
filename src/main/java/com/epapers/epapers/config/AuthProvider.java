@@ -1,6 +1,7 @@
 package com.epapers.epapers.config;
 
 import com.epapers.epapers.model.EpapersUser;
+import com.epapers.epapers.service.EmailService;
 import com.epapers.epapers.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -19,6 +20,9 @@ public class AuthProvider implements AuthenticationProvider {
     UserService userService;
 
     @Autowired
+    EmailService emailService;
+
+    @Autowired
     BCryptPasswordEncoder encoder;
 
     @Override
@@ -27,6 +31,20 @@ public class AuthProvider implements AuthenticationProvider {
         String password = authentication.getCredentials().toString();
         EpapersUser dbUser = userService.getUserByUserName(username);
         if(dbUser != null && encoder.matches(password, dbUser.getPassword())) {
+            emailService.notifyUserActivity(
+                String.format("""
+                        New User Signing In! (non-OAuth) 🤔
+
+                        Name: %s.
+
+                        Email ID: %s.
+
+                        City: %s.
+                        """,
+                        dbUser.getUsername(),
+                        dbUser.getEmail(),
+                        dbUser.getCity())
+            );
             return new UsernamePasswordAuthenticationToken(authentication.getName(), authentication.getCredentials().toString(), new ArrayList<>());
         }
         return null;
