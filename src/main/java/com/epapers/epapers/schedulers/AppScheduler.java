@@ -30,27 +30,7 @@ public class AppScheduler {
 
     private static final String SERVER_URL = AppConfig.HOSTNAME;
     private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;
-
-    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
-    public void keepAlivePortfolio() {
-        // try {
-        //     new URL(SERVER_URL).openStream();
-        //     log.info("🎵 stayin' alive! 🎵");
-        // } catch (Exception e) {
-        //     log.error("SOS! I AM DYING! SAVE ME!!!");
-        //     emailService.mailSOS();
-        // }
-        webClient
-            .get()
-            .uri(PORTFOLIO_URL)
-            .retrieve()
-            .toBodilessEntity()
-            .doOnError(err -> {
-                log.error("Portfolio in danger bruv!");
-                emailService.mailSOS();
-            })
-            .block();
-    }
+    private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
 
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
@@ -71,6 +51,28 @@ public class AppScheduler {
             })
             .doOnError(err -> {
                 log.error("SOS! I AM DYING! SAVE ME!!!");
+                emailService.mailSOS();
+            })
+            .block();
+
+        webClient
+            .get()
+            .uri(PORTFOLIO_URL)
+            .retrieve()
+            .toBodilessEntity()
+            .doOnError(err -> {
+                log.error("Portfolio in danger bruv!");
+                emailService.mailSOS();
+            })
+            .block();
+
+        webClient
+            .get()
+            .uri(CHATSTOMP_URL)
+            .retrieve()
+            .toBodilessEntity()
+            .doOnError(err -> {
+                log.error("Portfolio in danger bruv!");
                 emailService.mailSOS();
             })
             .block();

@@ -23,6 +23,7 @@ public class AppConfig {
     public final static String HOSTNAME = Optional.ofNullable(System.getenv("EPAPERS_HOSTNAME")).orElse("http://localhost:8000");
     public final static String TELEGRAM_BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
     public static final String PORTFOLIO_URL = System.getenv("PORTFOLIO_URL");
+    public static final String CHATSTOMP_URL = System.getenv("CHATSTOMP_URL");
 
     @Bean
     public JavaMailSender getJavaMailSender() {
