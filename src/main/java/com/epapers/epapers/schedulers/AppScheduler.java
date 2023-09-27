@@ -30,7 +30,7 @@ public class AppScheduler {
 
     private static final String SERVER_URL = AppConfig.HOSTNAME;
     private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;
-    // private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
+    private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
 
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
@@ -48,16 +48,16 @@ public class AppScheduler {
             })
             .block();
 
-        webClient
-            .get()
-            .uri(PORTFOLIO_URL)
-            .retrieve()
-            .toBodilessEntity()
-            .doOnError(err -> {
-                log.error("Portfolio in danger bruv!");
-                emailService.mailSOS();
-            })
-            .block();
+        // webClient
+        //     .get()
+        //     .uri(PORTFOLIO_URL)
+        //     .retrieve()
+        //     .toBodilessEntity()
+        //     .doOnError(err -> {
+        //         log.error("Portfolio in danger bruv!");
+        //         emailService.mailSOS();
+        //     })
+        //     .block();
 
         // webClient
         //     .get()
