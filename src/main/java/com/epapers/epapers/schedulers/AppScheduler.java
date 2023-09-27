@@ -29,10 +29,38 @@ public class AppScheduler {
     WebClient webClient;
 
     private static final String SERVER_URL = AppConfig.HOSTNAME;
-    private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;
-    private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
+    private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;    // fly.io
+    private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;    // render.com
 
-    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+    // @Scheduled(fixedDelay = 12, timeUnit = TimeUnit.HOURS)
+    // public void keepChatStompAlive() {
+    //     webClient
+    //         .get()
+    //         .uri(CHATSTOMP_URL)
+    //         .retrieve()
+    //         .toBodilessEntity()
+    //         .doOnError(err -> {
+    //             log.error("SHOULD REVIVE CHATSTOMP!");
+    //             emailService.mailSOS();
+    //         })
+    //         .block();
+    // }
+
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
+    public void keepPortfolioAlive() {
+        webClient
+            .get()
+            .uri(PORTFOLIO_URL)
+            .retrieve()
+            .toBodilessEntity()
+            .doOnError(err -> {
+                log.error("REVIVING PORTFOLIO");
+                emailService.mailSOS();
+            })
+            .block();
+    }
+
+    @Scheduled(fixedDelay = 8, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
         webClient
             .get()
@@ -47,28 +75,6 @@ public class AppScheduler {
                 emailService.mailSOS();
             })
             .block();
-
-        // webClient
-        //     .get()
-        //     .uri(PORTFOLIO_URL)
-        //     .retrieve()
-        //     .toBodilessEntity()
-        //     .doOnError(err -> {
-        //         log.error("Portfolio in danger bruv!");
-        //         emailService.mailSOS();
-        //     })
-        //     .block();
-
-        // webClient
-        //     .get()
-        //     .uri(CHATSTOMP_URL)
-        //     .retrieve()
-        //     .toBodilessEntity()
-        //     .doOnError(err -> {
-        //         log.error("Portfolio in danger bruv!");
-        //         emailService.mailSOS();
-        //     })
-        //     .block();
     }
 
     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
