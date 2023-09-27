@@ -30,17 +30,10 @@ public class AppScheduler {
 
     private static final String SERVER_URL = AppConfig.HOSTNAME;
     private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;
-    private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
+    // private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
 
     @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
-        // try {
-        //     new URL(SERVER_URL).openStream();
-        //     log.info("🎵 stayin' alive! 🎵");
-        // } catch (Exception e) {
-        //     log.error("SOS! I AM DYING! SAVE ME!!!");
-        //     emailService.mailSOS();
-        // }
         webClient
             .get()
             .uri(SERVER_URL)
@@ -66,16 +59,16 @@ public class AppScheduler {
             })
             .block();
 
-        webClient
-            .get()
-            .uri(CHATSTOMP_URL)
-            .retrieve()
-            .toBodilessEntity()
-            .doOnError(err -> {
-                log.error("Portfolio in danger bruv!");
-                emailService.mailSOS();
-            })
-            .block();
+        // webClient
+        //     .get()
+        //     .uri(CHATSTOMP_URL)
+        //     .retrieve()
+        //     .toBodilessEntity()
+        //     .doOnError(err -> {
+        //         log.error("Portfolio in danger bruv!");
+        //         emailService.mailSOS();
+        //     })
+        //     .block();
     }
 
     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
