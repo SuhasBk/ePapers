@@ -32,20 +32,6 @@ public class AppScheduler {
     private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;    // fly.io
     private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;    // render.com
 
-    // @Scheduled(fixedDelay = 12, timeUnit = TimeUnit.HOURS)
-    // public void keepChatStompAlive() {
-    //     webClient
-    //         .get()
-    //         .uri(CHATSTOMP_URL)
-    //         .retrieve()
-    //         .toBodilessEntity()
-    //         .doOnError(err -> {
-    //             log.error("SHOULD REVIVE CHATSTOMP!");
-    //             emailService.mailSOS();
-    //         })
-    //         .block();
-    // }
-
     @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
     public void keepPortfolioAlive() {
         webClient
@@ -60,7 +46,7 @@ public class AppScheduler {
             .block();
     }
 
-    @Scheduled(fixedDelay = 8, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
     public void keepAlive() {
         webClient
             .get()
@@ -72,6 +58,17 @@ public class AppScheduler {
             })
             .doOnError(err -> {
                 log.error("SOS! I AM DYING! SAVE ME!!!");
+                emailService.mailSOS();
+            })
+            .block();
+
+        webClient
+            .get()
+            .uri(CHATSTOMP_URL)
+            .retrieve()
+            .toBodilessEntity()
+            .doOnError(err -> {
+                log.error("SHOULD REVIVE CHATSTOMP!");
                 emailService.mailSOS();
             })
             .block();
