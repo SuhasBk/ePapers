@@ -66,6 +66,22 @@ public class EmailService {
         }
     }
 
+    public void sendGenericMails(String subject, String content) {
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper;
+
+        try {
+            helper = new MimeMessageHelper(message, true);
+            helper.setFrom("ePapers <noreply@epapers.com>");
+            helper.setTo("kowligi1998@gmail.com");
+            helper.setSubject(subject);
+            helper.setText(content);
+            emailSender.send(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void mailSOS() {
         MimeMessage message = emailSender.createMimeMessage();
         MimeMessageHelper helper;
