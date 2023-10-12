@@ -59,7 +59,7 @@ public class EmailService {
             helper.setFrom("ePapers <noreply@epapers.com>");
             helper.setTo("kowligi1998@gmail.com");
             helper.setSubject("Following App Activity Detected 🙌");
-            helper.setText(content, true);
+            helper.setText(content);
             emailSender.send(message);
         } catch (Exception e) {
             e.printStackTrace();
@@ -75,7 +75,7 @@ public class EmailService {
             helper.setFrom("ePapers <noreply@epapers.com>");
             helper.setTo("kowligi1998@gmail.com");
             helper.setSubject(subject);
-            helper.setText(content);
+            helper.setText(content, true);
             emailSender.send(message);
         } catch (Exception e) {
             e.printStackTrace();
