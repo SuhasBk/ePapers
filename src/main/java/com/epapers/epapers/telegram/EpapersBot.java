@@ -90,7 +90,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                             List<EpapersUser> allUsers = userService.getAllUsers();
                             executeAsync(new SendMessage(chatId, allUsers.toString()));
                         }
-                        case "/REVEAL_SUBSCRIBERS" -> {
+                        case "/REVEAL_SUBS" -> {
                             List<EpapersSubscription> allSubscribers = subscriptionService.getAllSubscriptions();
                             executeAsync(new SendMessage(chatId, allSubscribers.toString()));
                         }
