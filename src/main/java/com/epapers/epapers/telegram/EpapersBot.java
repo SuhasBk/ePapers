@@ -84,8 +84,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                             user.getUserName()+"_"+user.getFirstName()+"_"+user.getLastName());
                     StringBuilder editionPrompt = new StringBuilder();
                     switch (userMessage) {
-                        case "/HELP" ->
-                                executeAsync(new SendMessage(chatId, PROMPT_STRING));
+                        case "/HELP" -> executeAsync(new SendMessage(chatId, PROMPT_STRING));
                         case "/REVEAL_USERS" -> {
                             List<EpapersUser> allUsers = userService.getAllUsers();
                             executeAsync(new SendMessage(chatId, allUsers.toString()));
@@ -104,57 +103,55 @@ public class EpapersBot extends TelegramLongPollingBot {
                             executeAsync(new SendMessage(chatId, "Cleared Cached Files 👍"));
                         }
                         case "/HTBNG" -> {
-                            executeAsync(new SendMessage(chatId,
-                                    "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
-                            Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate())
-                                    .get(EPAPER_KEY_STRING);
-                            executeAsync(new SendMessage(chatId,
-                                    ACCESS_STRING + String.format(FILE_ACCESS_URL, htpdf.getFile().getName())));
+                            executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
+                            Epaper htpdf = (Epaper) ePaperService.getHTpdf("102", AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
+                            executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htpdf.getFile().getName())));
                             executeAsync(new SendDocument(chatId, new InputFile(htpdf.getFile())));
                         }
                         case "/TOIBNG" -> {
-                            executeAsync(new SendMessage(chatId,
-                                    "🎉 Cool! Preparing TOI ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
-                            Epaper toipdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate())
-                                    .get(EPAPER_KEY_STRING);
-                            executeAsync(new SendMessage(chatId,
-                                    ACCESS_STRING + String.format(FILE_ACCESS_URL, toipdf.getFile().getName())));
+                            executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing TOI ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
+                            Epaper toipdf = (Epaper) ePaperService.getTOIpdf("toibgc", AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
+                            executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toipdf.getFile().getName())));
                             executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
                         }
                         case "/KP" -> {
-                            executeAsync(new SendMessage(chatId,
-                                    "🎉 Cool! Preparing KP ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
+                            executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing KP ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
                             Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabhaNew().get(EPAPER_KEY_STRING);
-                            executeAsync(new SendMessage(chatId,
-                                    ACCESS_STRING + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName())));
+                            executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, kpPdf.getFile().getName())));
                             executeAsync(new SendDocument(chatId, new InputFile(kpPdf.getFile())));
                         }
                         case "/HT" -> {
-                            editionPrompt.append(
-                                    "💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
+                            editionPrompt.append("💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
                             editionPrompt.append("Example: /download Bengaluru_102_HT\n\n");
-                            ePaperService.getHTEditionList()
-                                    .forEach(edition -> editionPrompt.append("👉 ").append(edition.getEditionName())
-                                            .append("_").append(edition.getEditionId()).append("_").append("HT\n\n"));
+                            ePaperService.getHTEditionList().forEach(edition -> 
+                                editionPrompt
+                                .append("👉 ")
+                                .append(edition.getEditionName())
+                                .append("_")
+                                .append(edition.getEditionId())
+                                .append("_")
+                                .append("HT\n\n"));
                             executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         }
                         case "/TOI" -> {
-                            editionPrompt.append(
-                                    "💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
+                            editionPrompt.append("💡 Copy the WHOLE text for your city and send: '/download <copied_text>'\n\n");
                             editionPrompt.append("Example: /download Bangalore_toibgc_TOI\n\n");
-                            ePaperService.getTOIEditionList()
-                                    .forEach(edition -> editionPrompt.append("👉 ").append(edition.getEditionName())
-                                            .append("_").append(edition.getEditionId()).append("_").append("TOI\n\n"));
+                            ePaperService.getTOIEditionList().forEach(edition -> 
+                                editionPrompt
+                                .append("👉 ")
+                                .append(edition.getEditionName())
+                                .append("_")
+                                .append(edition.getEditionId())
+                                .append("_")
+                                .append("TOI\n\n"));
                             executeAsync(new SendMessage(chatId, editionPrompt.toString()));
                         }
                         case "/SUBSCRIBE" ->
-                                executeAsync(new SendMessage(chatId,
-                                        "Alright! Please enter '/subscribe <city>' to start your daily subscription.\n\n\nP.S.\nTo unsubscribe, please enter '/unsubscribe'."));
+                            executeAsync(new SendMessage(chatId, "Alright! Please enter '/subscribe <city>' to start your daily subscription.\n\n\nP.S.\nTo unsubscribe, please enter '/unsubscribe'."));
                         case "/UNSUBSCRIBE" -> {
                             boolean unsubscribed = subscriptionService.removeSubscription(chatId);
                             if (!unsubscribed) {
-                                executeAsync(new SendMessage(chatId,
-                                        "You are not subscribed to any edition!\n\n/subscribe to start daily subscription."));
+                                executeAsync(new SendMessage(chatId, "You are not subscribed to any edition!\n\n/subscribe to start daily subscription."));
                             } else {
                                 executeAsync(new SendMessage(chatId, "Awww. Sad to hear that! 😢"));
                             }

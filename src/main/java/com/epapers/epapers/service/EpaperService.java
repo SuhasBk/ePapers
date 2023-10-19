@@ -212,7 +212,7 @@ public class EpaperService {
             futureList.forEach(img -> {
                 try {
                     document.add(img.get());
-                    log.info("Downloaded: {} of {}", futureList.indexOf(img) + 1, futureList.size());
+                    log.info("{} Downloaded: {} of {}", edition, futureList.indexOf(img) + 1, futureList.size());
                 } catch (DocumentException | ExecutionException e) {
                     log.error("Error in fetching image - ", e);
                 } catch (InterruptedException e) {
