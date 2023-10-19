@@ -173,7 +173,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                             } else if (userMessage.startsWith("/SUBSCRIBE ")) {
                                 subscribeNewUser(chatId, user, userMessage);
                             } else {
-                                if (!update.getMessage().isGroupMessage()) {
+                                if (!update.getMessage().getChat().isGroupChat()) {
                                     executeAsync(new SendMessage(chatId, PROMPT_STRING));
                                 }
                             }
