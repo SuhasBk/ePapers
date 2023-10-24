@@ -63,7 +63,7 @@ var download = () => {
     let selectedDate = homeModule.dom.date.value;
     let userEmail = homeModule.dom.userEmail.value;
 
-    if(selectedDate === "") {
+    if (selectedDate === "" || new Date(selectedDate.replaceAll('-', '/')) > today) {
         alert("Please pick a proper date");
         return;
     } else {
