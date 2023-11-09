@@ -20,6 +20,7 @@ public class AppConfig {
 
     public final static Float HT_SCALE_PERCENT = 21f;
     public final static Float TOI_SCALE_PERCENT = 29f;
+    public static final int INPUT_BUFFER_SIZE = 4096;
     public final static String HOSTNAME = Optional.ofNullable(System.getenv("EPAPERS_HOSTNAME")).orElse("http://localhost:8000");
     public final static String TELEGRAM_BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
     public static final String PORTFOLIO_URL = System.getenv("PORTFOLIO_URL");

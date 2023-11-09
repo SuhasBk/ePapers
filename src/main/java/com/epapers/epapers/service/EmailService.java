@@ -3,6 +3,8 @@ package com.epapers.epapers.service;
 import javax.mail.internet.MimeMessage;
 
 import com.epapers.epapers.config.AppConfig;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -18,11 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 public class EmailService {
 
     private static final String FILE_ACCESS_URL = AppConfig.HOSTNAME + "/api/file?name=%s";
-    private final JavaMailSender emailSender;
 
-    public EmailService(JavaMailSender emailSender) {
-        this.emailSender = emailSender;
-    }
+    @Autowired
+    JavaMailSender emailSender;
 
     public void mailPDF(String emailId, Epaper epaper) {
         FileSystemResource pdfFile = new FileSystemResource(epaper.getFile());

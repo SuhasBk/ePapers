@@ -1,5 +1,6 @@
 package com.epapers.epapers.util;
 
+import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Epaper;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.*;
@@ -111,9 +112,9 @@ public class AppUtils {
         URL url = new URL(fileUrl);
         try(BufferedInputStream bis = new BufferedInputStream(url.openStream());
             FileOutputStream fis = new FileOutputStream(destFile);) {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[AppConfig.INPUT_BUFFER_SIZE];
             int count = 0;
-            while ((count = bis.read(buffer, 0, 1024)) != -1) {
+            while ((count = bis.read(buffer, 0, AppConfig.INPUT_BUFFER_SIZE)) != -1) {
                 fis.write(buffer, 0, count);
             }
         };
