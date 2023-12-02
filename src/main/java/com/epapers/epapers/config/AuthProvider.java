@@ -5,6 +5,7 @@ import com.epapers.epapers.service.EmailService;
 import com.epapers.epapers.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -47,7 +48,7 @@ public class AuthProvider implements AuthenticationProvider {
             );
             return new UsernamePasswordAuthenticationToken(authentication.getName(), authentication.getCredentials().toString(), new ArrayList<>());
         }
-        return null;
+        throw new BadCredentialsException("Invalid username or password");
     }
 
     @Override
