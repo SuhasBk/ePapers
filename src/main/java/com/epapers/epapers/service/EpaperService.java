@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -16,9 +15,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -31,7 +27,6 @@ import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.HTPage;
-import com.epapers.epapers.model.KPPage;
 import com.epapers.epapers.model.KPPageNew;
 import com.epapers.epapers.model.TOIPages;
 import com.epapers.epapers.util.AppUtils;
@@ -40,6 +35,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
+import com.itextpdf.text.pdf.PdfCopy;
+import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +56,8 @@ public class EpaperService {
     private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
     private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
     private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
-    private static final String KP_BASE_URL = "https://kpepaper.asianetnews.com/t/12222";
-    private static final String KP_EDITION_LINK = "https://kpepaper.asianetnews.com/download/fullpdflink/newspaper/12222/%s";
-    private static final String KP_BNG_PAGES_LINK = "http://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=21";
-    private static final String KP_IMAGE_BASE_URL = "http://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
+    private static final String KP_BNG_PAGES_LINK = "https://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=0";
+    private static final String KP_IMAGE_BASE_URL = "https://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
     private static final String EPAPER_KEY_STRING = "epaper";
 
     public List<Edition> getHTEditionList() {
@@ -280,21 +275,26 @@ public class EpaperService {
         }
         return response;
     }
-    
-    public Map<String, Object> getKannadaPrabhaNew() throws Exception {
+
+    public Map<String, Object> getKannadaPrabha() throws Exception {
         String date = AppUtils.getTodaysDate();
         Map<String, Object> response = new HashMap<>();
-        // Epaper epaper = new Epaper(date, "BNG");
-        List<String> pagesLinks = new ArrayList<>();
+        Epaper epaper = new Epaper(date, "BNG");
+        if (epaper.getFile().exists()) {
+            response.put(EPAPER_KEY_STRING, epaper);
+            return response;
+        }
         KPPageNew[] pages = null;
+
         log.info("Called getKP with date: {}", date);
         
         String[] dateSplit = date.split("/");
         String day = dateSplit[0];
         String month = dateSplit[1];
         String year = dateSplit[2];
+        String dateString = year + month + day;
 
-        String metaUrl = String.format(KP_BNG_PAGES_LINK, year+month+day);
+        String metaUrl = String.format(KP_BNG_PAGES_LINK, dateString);
 
         String links = webClient
             .get()
@@ -307,47 +307,41 @@ public class EpaperService {
         pages = new ObjectMapper().readValue(links, KPPageNew[].class);
         
         if (pages != null) {
-            for(int i = 0; i<pages.length; i++) {
-                String pageUrl = String.format(KP_IMAGE_BASE_URL, year, month, day, pages[i].getImagename());
-                pagesLinks.add(pageUrl);
+            ExecutorService executor = Executors.newCachedThreadPool();
+            List<Callable<PdfReader>> callables = new ArrayList<>();
+            final Document doc = new Document();
+            final PdfCopy copy = new PdfCopy(doc, new FileOutputStream(epaper.getFile().getName()));
+            doc.open();
+
+            for(int i = 1; i <= pages.length; i++) {
+                String fileLoc = dateString + "_" + String.format("%02d", i);
+                String pageUrl = String.format(KP_IMAGE_BASE_URL, year, month, day, fileLoc);
+                
+                callables.add(() -> {
+                    PdfReader reader = null;
+                    try {
+                        reader = new PdfReader(new URL(pageUrl).openStream());
+                    } catch(Exception e) {
+                        log.error("KP Download Error: {}", e);
+                    }
+                    return reader;
+                });
             }
-            final Epaper epaper = getPDF(pagesLinks, "BNG", date);
+            
+            List<Future<PdfReader>> results = executor.invokeAll(callables);
+            results.forEach(res -> {
+                try {
+                    log.info("KP Downloading: Page {} of {}", results.indexOf(res) + 1, results.size());
+                    PdfReader reader = res.get();
+                    copy.addDocument(reader);
+                    reader.close();
+                } catch (Exception e) {
+                    log.error("KP Merge Error: {}", e);
+                }
+            });
+            doc.close();
             response.put(EPAPER_KEY_STRING, epaper);
         }        
-        return response;
-    }
-
-    public Map<String, Object> getKannadaPrabha() {
-        Map<String, Object> response = new HashMap<>();
-        Epaper epaper = new Epaper(AppUtils.getTodaysDate(), "BNG");
-        String fileDownloadURL;
-
-        if(epaper.getFile().exists()) {
-            log.info("File already exists, skipping download from servers...");
-            response.put(EPAPER_KEY_STRING, epaper);
-            return response;
-        }
-
-        try {
-            Elements allDivs = Jsoup.connect(KP_BASE_URL).get().getElementsByClass("papr-card");
-            Element todayDiv = Optional.ofNullable(allDivs.first()).orElseThrow().parent();
-            String edition = Optional.ofNullable(todayDiv).orElseThrow().attr("href").split("/r/")[1];
-            KPPage kpPage = webClient
-                    .get()
-                    .uri(String.format(KP_EDITION_LINK, edition))
-                    .retrieve()
-                    .bodyToMono(KPPage.class)
-                    .block();
-
-            if(kpPage != null) {
-                fileDownloadURL = kpPage.getData().get("fullpdf");
-                AppUtils.downloadFileFromUrl(Optional.ofNullable(fileDownloadURL).orElseThrow(), epaper.getFile());
-            }
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "KP is down");
-        }
-
-        response.put(EPAPER_KEY_STRING, epaper);
         return response;
     }
 
