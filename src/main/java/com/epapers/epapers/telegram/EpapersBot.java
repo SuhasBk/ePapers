@@ -301,6 +301,12 @@ public class EpapersBot extends TelegramLongPollingBot {
                 }
 
                 log.info("ePapers successfully sent to - {}", chatId);
+                
+                try {
+                    execute(new SendMessage(chatId, "It's feedback time! Please fill out this form for any queries/suggestions you might have: https://forms.gle/KM12YNRUdqrPZN2K6", "", true, false, null, null, null, true, false));
+                } catch (Exception e) {
+                    log.error("FAILED TO SEND FEEDBACK!, {}", e);
+                }
             };
 
             executor.submit(runnableTask);
