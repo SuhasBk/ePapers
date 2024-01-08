@@ -285,7 +285,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                             }
                         }
                     } catch (Exception e) {
-                        log.error("HT Subscription service failed. - {}", e);
+                        log.error("HT/KP Subscription service failed. - {}", e);
                     }
                 }
 

@@ -27,7 +27,7 @@ public class AppConfig {
     public static final String CHATSTOMP_URL = System.getenv("CHATSTOMP_URL");
 
     @Bean
-    public JavaMailSender getJavaMailSender() {
+    JavaMailSender getJavaMailSender() {
         String username = System.getenv("EMAIL_ID");
         String password = System.getenv("EMAIL_PASSWORD");
 
@@ -48,12 +48,12 @@ public class AppConfig {
     }
 
     @Bean
-    public BCryptPasswordEncoder encoder() {
+    BCryptPasswordEncoder encoder() {
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public WebClient webClient() {
+    WebClient webClient() {
         // configure pooling strategy, max connections, connection availability with eviction
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
                 .maxConnections(500)
