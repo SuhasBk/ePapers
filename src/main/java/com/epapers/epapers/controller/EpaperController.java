@@ -2,6 +2,9 @@ package com.epapers.epapers.controller;
 
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.service.EpaperService;
+import com.epapers.epapers.service.downloader.HTDownload;
+import com.epapers.epapers.service.downloader.PDFDownloader;
+import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +35,9 @@ public class EpaperController {
 
     @Autowired
     EpapersBot telegramBot;
+
+    @Autowired
+    WebClient webClient;
 
     @GetMapping("/getEditionList")
     public List<Object> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
@@ -56,16 +63,19 @@ public class EpaperController {
         if(publication == null) {
             throw new ResponseStatusException(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Missing 'publication' in payload", null);
         }
-
+        
+        PDFDownloader downloader = new PDFDownloader();
         if(publication.equals("HT")) {
-            pdfDocument = (Epaper) ePaperService.getHTpdf(mainEdition, date).get("epaper");
+            downloader.setDownloadStrategy(new HTDownload(webClient));
         } else {
-            pdfDocument = (Epaper) ePaperService.getTOIpdf(mainEdition, date).get("epaper");
+            downloader.setDownloadStrategy(new TOIDownload(webClient));
         }
         
         if (emailId != null && !emailId.isEmpty()) {
             ePaperService.mailPDF(emailId, mainEdition, date, publication);
         }
+        
+        pdfDocument = (Epaper) downloader.getPDF(mainEdition, date).get("epaper");
         return pdfDocument.getFile().getName();
     }
 

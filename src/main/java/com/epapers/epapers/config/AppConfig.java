@@ -1,5 +1,9 @@
 package com.epapers.epapers.config;
 
+import java.time.Duration;
+import java.util.Optional;
+import java.util.Properties;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -8,12 +12,9 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.resources.ConnectionProvider;
-
-import java.time.Duration;
-import java.util.Optional;
-import java.util.Properties;
 
 @Configuration
 public class AppConfig {
@@ -56,14 +57,14 @@ public class AppConfig {
     WebClient webClient() {
         // configure pooling strategy, max connections, connection availability with eviction
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
-                .maxConnections(500)
-                .maxIdleTime(Duration.ofSeconds(20))
-                .maxLifeTime(Duration.ofSeconds(60))
-                .pendingAcquireTimeout(Duration.ofSeconds(60))
-                .evictInBackground(Duration.ofSeconds(120)).build();
+                .maxConnections(200)
+                .maxIdleTime(Duration.ofSeconds(10))
+                .maxLifeTime(Duration.ofSeconds(30))
+                .pendingAcquireTimeout(Duration.ofSeconds(30))
+                .evictInBackground(Duration.ofSeconds(240)).build();
 
         // configure in-memory size for http request and response bodies, if it exceeds, write to disk:
-        final int size = 16 * 1024 * 1024;  // 16MB
+        final int size = 5 * 1024 * 1024;  // 16MB
         final ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
                 .build();

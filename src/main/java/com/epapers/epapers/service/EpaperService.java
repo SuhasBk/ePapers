@@ -28,7 +28,9 @@ import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.HTPage;
 import com.epapers.epapers.model.KPPageNew;
-import com.epapers.epapers.model.TOIPages;
+import com.epapers.epapers.service.downloader.HTDownload;
+import com.epapers.epapers.service.downloader.PDFDownloader;
+import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.util.AppUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,8 +56,6 @@ public class EpaperService {
 
     private static final String HT_BASE_URL = "https://epaper.hindustantimes.com";
     private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
-    private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
-    private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
     private static final String KP_BNG_PAGES_LINK = "https://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=0";
     private static final String KP_IMAGE_BASE_URL = "https://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
     private static final String EPAPER_KEY_STRING = "epaper";
@@ -228,53 +228,53 @@ public class EpaperService {
         return epaper;
     }
 
-    public Map<String, Object> getHTpdf(String mainEdition, String date) throws Exception {
-        Map<String, Object> response = new HashMap<>();
-        List<String> pagesLinks = new ArrayList<>();
-        log.info("Called getHTpdf with edition: {} and date: {}", mainEdition, date);
+    // public Map<String, Object> getHTpdf(String mainEdition, String date) throws Exception {
+    //     Map<String, Object> response = new HashMap<>();
+    //     List<String> pagesLinks = new ArrayList<>();
+    //     log.info("Called getHTpdf with edition: {} and date: {}", mainEdition, date);
 
-        List<String> editions = getHTSupplementEditions(mainEdition, date);
-        editions.forEach(edition -> {
-            try {
-                pagesLinks.addAll(getPages(edition, date));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+    //     List<String> editions = getHTSupplementEditions(mainEdition, date);
+    //     editions.forEach(edition -> {
+    //         try {
+    //             pagesLinks.addAll(getPages(edition, date));
+    //         } catch (Exception e) {
+    //             e.printStackTrace();
+    //         }
+    //     });
 
-        final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-        response.put(EPAPER_KEY_STRING, epaper);
-        return response;
-    }
+    //     final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
+    //     response.put(EPAPER_KEY_STRING, epaper);
+    //     return response;
+    // }
 
-    public Map<String, Object> getTOIpdf(String mainEdition, String date) throws Exception {
-        Map<String, Object> response = new HashMap<>();
-        List<String> pagesLinks = new ArrayList<>();
-        log.info("Called getTOIpdf with edition: {} and date: {}", mainEdition, date);
+    // public Map<String, Object> getTOIpdf(String mainEdition, String date) throws Exception {
+    //     Map<String, Object> response = new HashMap<>();
+    //     List<String> pagesLinks = new ArrayList<>();
+    //     log.info("Called getTOIpdf with edition: {} and date: {}", mainEdition, date);
 
-        String[] dateSplit = date.split("/");
-        String day = dateSplit[0];
-        String month = dateSplit[1];
-        String year = dateSplit[2];
-        String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
+    //     String[] dateSplit = date.split("/");
+    //     String day = dateSplit[0];
+    //     String month = dateSplit[1];
+    //     String year = dateSplit[2];
+    //     String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
 
-        TOIPages pages = webClient
-                .get()
-                .uri(metaUrl)
-                .retrieve()
-                .bodyToMono(TOIPages.class)
-                .block();
+    //     TOIPages pages = webClient
+    //             .get()
+    //             .uri(metaUrl)
+    //             .retrieve()
+    //             .bodyToMono(TOIPages.class)
+    //             .block();
 
-        if(pages != null) {
-            pages.getDayIndex().forEach(pageData -> {
-                String pageUrl = String.format("%s%s/%s/%s/%s/Page/%s.jpg", TOI_BASE_URL, mainEdition, year, month, day, pageData.get("PageName"));
-                pagesLinks.add(pageUrl);
-            });
-            final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-            response.put(EPAPER_KEY_STRING, epaper);
-        }
-        return response;
-    }
+    //     if(pages != null) {
+    //         pages.getDayIndex().forEach(pageData -> {
+    //             String pageUrl = String.format("%s%s/%s/%s/%s/Page/%s.jpg", TOI_BASE_URL, mainEdition, year, month, day, pageData.get("PageName"));
+    //             pagesLinks.add(pageUrl);
+    //         });
+    //         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
+    //         response.put(EPAPER_KEY_STRING, epaper);
+    //     }
+    //     return response;
+    // }
 
     public Map<String, Object> getKannadaPrabha() throws Exception {
         String date = AppUtils.getTodaysDate();
@@ -349,11 +349,13 @@ public class EpaperService {
         new Thread(() -> {
             Epaper epaper;
             try {
+                PDFDownloader downloader = new PDFDownloader();
                 if(publication.equals("HT")) {
-                    epaper = (Epaper) getHTpdf(mainEdition, date).get(EPAPER_KEY_STRING);
+                    downloader.setDownloadStrategy(new HTDownload(webClient));
                 } else {
-                    epaper = (Epaper) getTOIpdf(mainEdition, date).get(EPAPER_KEY_STRING);
+                    downloader.setDownloadStrategy(new TOIDownload(webClient));
                 }
+                epaper = (Epaper) downloader.getPDF(mainEdition, date).get("epaper");
                 // AppUtils.compressPDF(epaper);
                 emailService.mailPDF(emailId, epaper);
             } catch (Exception e) {
