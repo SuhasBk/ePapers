@@ -286,11 +286,11 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                 if (htEdition != null) {
                     try {
-                        downloader.setDownloadStrategy(new HTDownload(webClient));
-                         Epaper htPdf = (Epaper) downloader.getPDF(htEdition, today).get(EPAPER_KEY_STRING);
-                         if (!cacheOnly) {
-                             sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
-                         }
+//                        downloader.setDownloadStrategy(new HTDownload(webClient));
+//                        Epaper htPdf = (Epaper) downloader.getPDF(htEdition, today).get(EPAPER_KEY_STRING);
+//                         if (!cacheOnly) {
+//                             sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+//                         }
 
                         if (htEdition.equals("102")) {
                             log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
