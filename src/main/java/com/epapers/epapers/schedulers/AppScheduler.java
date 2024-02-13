@@ -32,7 +32,7 @@ public class AppScheduler {
     private static final String PORTFOLIO_URL = AppConfig.PORTFOLIO_URL;    // fly.io
     private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;    // render.com
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.HOURS)
+    @Scheduled(fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void keepPortfolioAlive() {
         webClient
             .get()
