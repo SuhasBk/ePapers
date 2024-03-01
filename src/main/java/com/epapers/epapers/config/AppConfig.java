@@ -65,7 +65,7 @@ public class AppConfig {
                 .build();
 
         // configure in-memory size for http request and response bodies, if it exceeds, write to disk:
-        final int size = 5 * 1024 * 1024;  // 16MB
+        final int size = 50 * 1024 * 1024;  // 16MB
         final ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
                 .build();

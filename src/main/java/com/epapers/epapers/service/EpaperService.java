@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import com.epapers.epapers.service.downloader.KPDownload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -229,122 +230,10 @@ public class EpaperService {
         return epaper;
     }
 
-    // public Map<String, Object> getHTpdf(String mainEdition, String date) throws Exception {
-    //     Map<String, Object> response = new HashMap<>();
-    //     List<String> pagesLinks = new ArrayList<>();
-    //     log.info("Called getHTpdf with edition: {} and date: {}", mainEdition, date);
-
-    //     List<String> editions = getHTSupplementEditions(mainEdition, date);
-    //     editions.forEach(edition -> {
-    //         try {
-    //             pagesLinks.addAll(getPages(edition, date));
-    //         } catch (Exception e) {
-    //             e.printStackTrace();
-    //         }
-    //     });
-
-    //     final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-    //     response.put(EPAPER_KEY_STRING, epaper);
-    //     return response;
-    // }
-
-    // public Map<String, Object> getTOIpdf(String mainEdition, String date) throws Exception {
-    //     Map<String, Object> response = new HashMap<>();
-    //     List<String> pagesLinks = new ArrayList<>();
-    //     log.info("Called getTOIpdf with edition: {} and date: {}", mainEdition, date);
-
-    //     String[] dateSplit = date.split("/");
-    //     String day = dateSplit[0];
-    //     String month = dateSplit[1];
-    //     String year = dateSplit[2];
-    //     String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
-
-    //     TOIPages pages = webClient
-    //             .get()
-    //             .uri(metaUrl)
-    //             .retrieve()
-    //             .bodyToMono(TOIPages.class)
-    //             .block();
-
-    //     if(pages != null) {
-    //         pages.getDayIndex().forEach(pageData -> {
-    //             String pageUrl = String.format("%s%s/%s/%s/%s/Page/%s.jpg", TOI_BASE_URL, mainEdition, year, month, day, pageData.get("PageName"));
-    //             pagesLinks.add(pageUrl);
-    //         });
-    //         final Epaper epaper = getPDF(pagesLinks, mainEdition, date);
-    //         response.put(EPAPER_KEY_STRING, epaper);
-    //     }
-    //     return response;
-    // }
-
     public Map<String, Object> getKannadaPrabha() throws Exception {
-        String date = AppUtils.getTodaysDate();
-        Map<String, Object> response = new HashMap<>();
-        Epaper epaper = new Epaper(date, "BNG");
-        if (epaper.getFile().exists()) {
-            response.put(EPAPER_KEY_STRING, epaper);
-            return response;
-        }
-        KPPageNew[] pages = null;
-
-        log.info("Called getKP with date: {}", date);
-        
-        String[] dateSplit = date.split("/");
-        String day = dateSplit[0];
-        String month = dateSplit[1];
-        String year = dateSplit[2];
-        String dateString = year + month + day;
-
-        String metaUrl = String.format(KP_BNG_PAGES_LINK, dateString);
-
-        String links = webClient
-            .get()
-            .uri(metaUrl)
-            .retrieve()
-            .toEntity(String.class)
-            .timeout(Duration.ofSeconds(5))
-            .block()
-            .getBody();
-        
-        pages = new ObjectMapper().readValue(links, KPPageNew[].class);
-        
-        if (pages != null) {
-            ExecutorService executor = Executors.newCachedThreadPool();
-            List<Callable<PdfReader>> callables = new ArrayList<>();
-            final Document doc = new Document();
-            final PdfCopy copy = new PdfCopy(doc, new FileOutputStream(epaper.getFile().getName()));
-            doc.open();
-
-            for(int i = 1; i <= pages.length; i++) {
-                String fileLoc = dateString + "_" + String.format("%02d", i);
-                String pageUrl = String.format(KP_IMAGE_BASE_URL, year, month, day, fileLoc);
-                
-                callables.add(() -> {
-                    PdfReader reader = null;
-                    try {
-                        reader = new PdfReader(new URL(pageUrl).openStream());
-                    } catch(Exception e) {
-                        log.error("KP Download Error: {}", e);
-                    }
-                    return reader;
-                });
-            }
-            
-            List<Future<PdfReader>> results = executor.invokeAll(callables);
-            results.forEach(res -> {
-                try {
-                    log.info("KP Downloading: Page {} of {}", results.indexOf(res) + 1, results.size());
-                    PdfReader reader = res.get();
-                    copy.addDocument(reader);
-                    reader.close();
-                } catch (Exception e) {
-                    log.error("KP Merge Error: {}", e);
-                }
-            });
-            doc.close();
-            response.put(EPAPER_KEY_STRING, epaper);
-        }        
-        return response;
+        PDFDownloader downloader = new PDFDownloader();
+        downloader.setDownloadStrategy(new KPDownload(webClient));
+        return downloader.getPDF("", "");
     }
 
     public void mailPDF(String emailId, String mainEdition, String date, String publication) {

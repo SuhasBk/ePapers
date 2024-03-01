@@ -2,18 +2,16 @@ package com.epapers.epapers.service.downloader;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.itextpdf.text.pdf.PdfReader;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.epapers.epapers.config.AppConfig;
@@ -26,13 +24,14 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Slf4j
 public class HTDownload implements DownloadStrategy {
 
     private static final String HT_BASE_URL = "https://epaper.hindustantimes.com";
     private static final String EPAPER_KEY_STRING = "epaper";
-    private WebClient webClient;
+    private final WebClient webClient;
 
     public HTDownload(WebClient webClient) {
         this.webClient = webClient;
@@ -98,7 +97,11 @@ public class HTDownload implements DownloadStrategy {
         document.open();
         links.forEach(imgLink -> callableList.add(() -> {
             final float scaleFactor = AppConfig.HT_SCALE_PERCENT;
-            Image image = Image.getInstance(new URL(imgLink));
+            Image image = Image.getInstance(Objects.requireNonNull(Mono.from(webClient.get()
+                            .uri(imgLink)
+                            .retrieve()
+                            .bodyToMono(byte[].class))
+                            .block()));
             image.scalePercent(scaleFactor);
             return image;
         }));
