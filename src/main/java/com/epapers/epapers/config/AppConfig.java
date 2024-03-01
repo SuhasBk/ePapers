@@ -58,10 +58,11 @@ public class AppConfig {
         // configure pooling strategy, max connections, connection availability with eviction
         ConnectionProvider provider = ConnectionProvider.builder("fixed")
                 .maxConnections(200)
-                .maxIdleTime(Duration.ofSeconds(10))
+                .maxIdleTime(Duration.ofSeconds(5))
                 .maxLifeTime(Duration.ofSeconds(30))
-                .pendingAcquireTimeout(Duration.ofSeconds(30))
-                .evictInBackground(Duration.ofSeconds(240)).build();
+                .pendingAcquireTimeout(Duration.ofSeconds(5))
+                .evictInBackground(Duration.ofSeconds(240))
+                .build();
 
         // configure in-memory size for http request and response bodies, if it exceeds, write to disk:
         final int size = 5 * 1024 * 1024;  // 16MB

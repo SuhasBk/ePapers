@@ -3,6 +3,7 @@ package com.epapers.epapers.service;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URL;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -301,6 +302,7 @@ public class EpaperService {
             .uri(metaUrl)
             .retrieve()
             .toEntity(String.class)
+            .timeout(Duration.ofSeconds(5))
             .block()
             .getBody();
         

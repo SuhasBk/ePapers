@@ -102,4 +102,19 @@ public class EpaperController {
         telegramBot.triggerSubscriptions(false);
         return ResponseEntity.ok().body("triggered!");
     }
+
+    @GetMapping("/kp")
+    public ResponseEntity<FileSystemResource> getKP() throws Exception {
+        Map<String, Object> res = ePaperService.getKannadaPrabha();
+        Epaper paper = (Epaper) res.get("epaper");
+        FileSystemResource resource = ePaperService.getFile(paper.getFile().getName());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + resource.getFile().getName());
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(resource);
+    }
 }

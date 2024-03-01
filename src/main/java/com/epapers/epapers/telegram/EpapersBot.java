@@ -302,17 +302,17 @@ public class EpapersBot extends TelegramLongPollingBot {
                     }
                 }
 
-//                if (toiEdition != null) {
-//                    try {
-//                        downloader.setDownloadStrategy(new TOIDownload(webClient));
-//                        Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
-//                        if(!cacheOnly) {
-//                            sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
-//                        }
-//                    } catch (Exception e) {
-//                        log.error("TOI Subscription service failed. - {}", e.getMessage());
-//                    }
-//                }
+                if (toiEdition != null) {
+                    try {
+                        downloader.setDownloadStrategy(new TOIDownload(webClient));
+                        Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
+                        if(!cacheOnly) {
+                            sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+                        }
+                    } catch (Exception e) {
+                        log.error("TOI Subscription service failed. - {}", e.getMessage());
+                    }
+                }
 
                 log.info("ePapers successfully sent to - {}", chatId);
                 
