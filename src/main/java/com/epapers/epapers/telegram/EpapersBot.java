@@ -245,16 +245,14 @@ public class EpapersBot extends TelegramLongPollingBot {
         }
     }
 
-    public boolean sendSubscriptionMessage(String chatId, String message, File file) {
+    public void sendSubscriptionMessage(String chatId, String message, File file) {
         try {
             executeAsync(new SendMessage(chatId, message));
             if (file != null && !AppUtils.isLargeFile(file, "TELEGRAM")) {
                 executeAsync(new SendDocument(chatId, new InputFile(file)));
             }
-            return true;
         } catch (TelegramApiException e) {
             log.error("Failed to send subscribed message to {}", chatId);
-            return false;
         }
     }
 
@@ -300,28 +298,30 @@ public class EpapersBot extends TelegramLongPollingBot {
                             }
                         }
                     } catch (Exception e) {
-                        log.error("HT/KP Subscription service failed. - {}", e);
+                        log.error("HT/KP Subscription service failed. - {}", e.getMessage());
                     }
                 }
 
-                if (toiEdition != null) {
-                    try {
-                        downloader.setDownloadStrategy(new TOIDownload(webClient));
-                        Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
-                        if(!cacheOnly) {
-                            sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
-                        }
-                    } catch (Exception e) {
-                        log.error("TOI Subscription service failed. - {}", e);
-                    }
-                }
+//                if (toiEdition != null) {
+//                    try {
+//                        downloader.setDownloadStrategy(new TOIDownload(webClient));
+//                        Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
+//                        if(!cacheOnly) {
+//                            sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+//                        }
+//                    } catch (Exception e) {
+//                        log.error("TOI Subscription service failed. - {}", e.getMessage());
+//                    }
+//                }
 
                 log.info("ePapers successfully sent to - {}", chatId);
                 
                 try {
-                    execute(new SendMessage(chatId, "It's feedback time! Please fill out this form for any queries/suggestions you might have: https://forms.gle/KM12YNRUdqrPZN2K6", "", true, false, null, null, null, true, false));
+                    if (!cacheOnly) {
+                        sendSubscriptionMessage(chatId, "It's feedback time! Please fill out this form for any queries/suggestions you might have: https://forms.gle/KM12YNRUdqrPZN2K6", null);
+                    }
                 } catch (Exception e) {
-                    log.error("FAILED TO SEND FEEDBACK!, {}", e);
+                    log.error("FAILED TO SEND FEEDBACK TO USER - {}", chatId);
                 }
             };
 

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Component;
 
 import com.epapers.epapers.telegram.EpapersBot;
 
+import java.util.concurrent.TimeUnit;
+
 @Component
 public class AppScheduler {
 
@@ -64,10 +66,10 @@ public class AppScheduler {
     //         .block();
     // }
 
-    // @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
-    // public void collectGarbage() {
-    //     System.gc();
-    // }
+     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
+     public void collectGarbage() {
+         System.gc();
+     }
 
     // @Scheduled(cron = "0 0 0 * * ?", zone = "Asia/Kolkata")
     // public void refreshDB() {
