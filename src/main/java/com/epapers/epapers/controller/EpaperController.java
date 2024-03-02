@@ -7,18 +7,18 @@ import com.epapers.epapers.service.downloader.PDFDownloader;
 import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
+import java.net.http.HttpClient;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -29,15 +29,18 @@ import java.util.Optional;
 @RequestMapping("/api")
 @CrossOrigin("*")
 public class EpaperController {
-    
-    @Autowired
-    EpaperService ePaperService;
 
-    @Autowired
-    EpapersBot telegramBot;
+    private final EpaperService ePaperService;
+    private final EpapersBot telegramBot;
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    WebClient webClient;
+    public EpaperController(EpaperService epaperService, EpapersBot epapersBot, HttpClient httpClient, ObjectMapper objectMapper) {
+        this.ePaperService = epaperService;
+        this.telegramBot = epapersBot;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+    }
 
     @GetMapping("/getEditionList")
     public List<Object> getHTEditionList(@RequestParam("publication") String publication) throws Exception {
@@ -64,11 +67,11 @@ public class EpaperController {
             throw new ResponseStatusException(HttpStatus.SC_UNPROCESSABLE_ENTITY, "Missing 'publication' in payload", null);
         }
         
-        PDFDownloader downloader = new PDFDownloader();
+        PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
         if(publication.equals("HT")) {
-            downloader.setDownloadStrategy(new HTDownload(webClient));
+            downloader.setDownloadStrategy(new HTDownload());
         } else {
-            downloader.setDownloadStrategy(new TOIDownload(webClient));
+            downloader.setDownloadStrategy(new TOIDownload());
         }
         
         if (emailId != null && !emailId.isEmpty()) {
@@ -101,6 +104,12 @@ public class EpaperController {
     public ResponseEntity<String> trigger() {
         telegramBot.triggerSubscriptions(false);
         return ResponseEntity.ok().body("triggered!");
+    }
+
+    @GetMapping("/triggerCache")
+    public ResponseEntity<String> triggerCache() {
+        telegramBot.triggerSubscriptions(true);
+        return ResponseEntity.ok().body("caching triggered!");
     }
 
     @GetMapping("/kp")

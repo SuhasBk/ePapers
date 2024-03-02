@@ -10,30 +10,32 @@ import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfReader;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
-import java.time.Duration;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class KPDownload implements DownloadStrategy {
 
     private static final String KP_BNG_PAGES_LINK = "https://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=0";
     private static final String KP_IMAGE_BASE_URL = "https://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
-
-    private final WebClient webClient;
+    private HttpClient httpClient;
 
     private static final String EPAPER_KEY_STRING = "epaper";
 
-    public KPDownload(WebClient webClient) {
-        this.webClient = webClient;
+    @Override
+    public void initialize(HttpClient httpClient, ObjectMapper objectMapper) {
+        this.httpClient = httpClient;
     }
 
     @Override
@@ -56,14 +58,19 @@ public class KPDownload implements DownloadStrategy {
 
         String metaUrl = String.format(KP_BNG_PAGES_LINK, dateString);
 
-        String links = webClient
-                .get()
-                .uri(metaUrl)
-                .retrieve()
-                .toEntity(String.class)
-                .timeout(Duration.ofSeconds(5))
-                .block()
-                .getBody();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(metaUrl))
+                .build();
+
+        String links = "";
+        try {
+            HttpResponse<String> res = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            links = res.body();
+        } catch (
+                IOException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
         KPPageNew[] pages;
         try {
@@ -87,18 +94,14 @@ public class KPDownload implements DownloadStrategy {
             for (int i = 1; i <= pages.length; i++) {
                 String fileLoc = dateString + "_" + String.format("%02d", i);
                 String pageUrl = String.format(KP_IMAGE_BASE_URL, year, month, day, fileLoc);
-
-                CompletableFuture<PdfReader> future = CompletableFuture.supplyAsync(() -> Mono.from(webClient.get()
-                                .uri(pageUrl)
-                                .retrieve()
-                                .bodyToMono(byte[].class))
-                        .map(bytes -> {
-                            try {
-                                return new PdfReader(bytes);
-                            } catch (IOException e) {
-                                return null;
-                            }
-                        }).block(), executor);
+                CompletableFuture<PdfReader> future = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        return new PdfReader(new URL(pageUrl));
+                    } catch (
+                            IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }, executor);
                 futures.add(future);
             }
 

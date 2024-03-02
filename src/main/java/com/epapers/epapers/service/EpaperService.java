@@ -1,76 +1,47 @@
 package com.epapers.epapers.service;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.net.URL;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.Collectors;
-
-import com.epapers.epapers.service.downloader.KPDownload;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.server.ResponseStatusException;
-
-import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Edition;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.HTPage;
-import com.epapers.epapers.model.KPPageNew;
 import com.epapers.epapers.service.downloader.HTDownload;
+import com.epapers.epapers.service.downloader.KPDownload;
 import com.epapers.epapers.service.downloader.PDFDownloader;
 import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.util.AppUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Image;
-import com.itextpdf.text.pdf.PdfCopy;
-import com.itextpdf.text.pdf.PdfReader;
-import com.itextpdf.text.pdf.PdfWriter;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.File;
+import java.net.http.HttpClient;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
 @Slf4j
 public class EpaperService {
+    private final EmailService emailService;
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    EmailService emailService;
-
-    @Autowired
-    WebClient webClient;
+    public EpaperService(EmailService emailService, HttpClient httpClient, ObjectMapper objectMapper) {
+        this.emailService = emailService;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+    }
 
     private static final String HT_BASE_URL = "https://epaper.hindustantimes.com";
     private static final String HT_EDITIONS_URL = "https://epaper.hindustantimes.com/Home/GetEditionList";
-    private static final String KP_BNG_PAGES_LINK = "https://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=0";
-    private static final String KP_IMAGE_BASE_URL = "https://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
-    private static final String EPAPER_KEY_STRING = "epaper";
 
     public List<Edition> getHTEditionList() {
         log.info("Accessing HT url : {}", HT_EDITIONS_URL);
-        Edition[] editions = webClient
-                .get()
-                .uri(HT_EDITIONS_URL)
-                .retrieve()
-                .bodyToMono(Edition[].class)
-                .doOnError(err -> {throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "HT is down " + err.toString());})
-                .block();
+        Edition[] editions = AppUtils.fetchHttpResponse(this.httpClient, this.objectMapper, HT_EDITIONS_URL, Edition[].class);
 
         if(editions == null || editions.length == 0) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "I am guessing yesterday was a holiday for journalists, they must be chilling today, try tomorrow!\n\nIf it still ain't working, then adiós, we are done here...");
@@ -86,7 +57,7 @@ public class EpaperService {
         try {
             toiEditions = Arrays.asList(objectMapper.readValue(editions, Edition[].class));
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            log.error("JSON Parsing failed - {}", e.getMessage());
         }
         log.info("TOI Edition list: {}", toiEditions);
         return toiEditions;
@@ -109,12 +80,7 @@ public class EpaperService {
         log.info("Called getHTSupplementEditions with edition: {} and date: {}", mainEdition, date);
 
         String url = String.format("%1$s/Home/GetAllSupplement?edid=%2$s&EditionDate=%3$s", HT_BASE_URL, mainEdition, date);
-        Edition[] htSupplements = webClient
-                .get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(Edition[].class)
-                .block();
+        Edition[] htSupplements = AppUtils.fetchHttpResponse(httpClient, objectMapper, url, Edition[].class);
 
         if(htSupplements != null && htSupplements.length != 0) {
             editions = Arrays.stream(htSupplements).toList()
@@ -152,13 +118,7 @@ public class EpaperService {
         List<String> links = new ArrayList<>();
         log.info("Called getPages with edition: {} and date: {}", edition, date);
         String url = String.format("%1$s/Home/GetAllpages?editionid=%2$s&editiondate=%3$s", HT_BASE_URL, edition, date);
-
-         HTPage[] htPages = webClient
-                .get()
-                .uri(url)
-                .retrieve()
-                .bodyToMono(HTPage[].class)
-                .block();
+        HTPage[] htPages = AppUtils.fetchHttpResponse(httpClient, objectMapper, url, HTPage[].class);
 
          if(htPages != null && htPages.length != 0) {
              Arrays.stream(htPages).toList().forEach(page -> links.add(page.getHighResolution().replace("_mr", "")));
@@ -167,72 +127,9 @@ public class EpaperService {
         return links;
     }
 
-    public Epaper getPDF(List<String> links, String edition, String date) throws Exception {
-        log.info("Starting downloads for edition: {}", edition);
-        // prepare the File object
-        Epaper epaper = new Epaper(date.replace("/", "_"), edition);
-        File file = epaper.getFile();
-        if(file.exists()) {
-            log.info("File already exists, skipping download from servers...");
-            return epaper;
-        }
-
-        // define what the executor should do and return
-        ExecutorService executor = Executors.newCachedThreadPool();
-        List<Callable<Image>> callableList = new ArrayList<>();
-        List<Future<Image>> futureList;
-        Document document = new Document();
-        PdfWriter.getInstance(document, new FileOutputStream(file));
-
-        document.open();
-        links.forEach(imgLink -> callableList.add(() -> {
-            // scale factor based on publication:
-            final float scaleFactor;
-            if(imgLink.contains("harnscloud")) {
-                scaleFactor = AppConfig.TOI_SCALE_PERCENT;
-            } else if (imgLink.contains("enewspapr")) {
-                scaleFactor = 70f;
-            } else {
-                scaleFactor = AppConfig.HT_SCALE_PERCENT;
-            }
-
-            Image image = Image.getInstance(new URL(imgLink));
-            image.scalePercent(scaleFactor);
-            return image;
-        }));
-
-        // let executor handle stuff including exceptions
-        futureList = executor.invokeAll(callableList);
-
-        // process returned results in synchronous manner
-        try {
-            futureList.forEach(img -> {
-                try {
-                    document.add(img.get());
-                    log.info("{} Downloaded: {} of {}", edition, futureList.indexOf(img) + 1, futureList.size());
-                } catch (DocumentException | ExecutionException e) {
-                    log.error("Error in fetching image - ", e);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            });
-        } catch(Exception e) {
-            e.printStackTrace();
-        } finally {
-            document.close();
-            log.info("Finished collecting pages: {}\n", document);
-            if(!executor.shutdownNow().isEmpty()) {
-                log.error("Some pages might not be added to PDF! :(");
-            }
-            log.info("File size in MB: {}\n", (file.length() / (1024*1024)));
-        }
-
-        return epaper;
-    }
-
     public Map<String, Object> getKannadaPrabha() throws Exception {
-        PDFDownloader downloader = new PDFDownloader();
-        downloader.setDownloadStrategy(new KPDownload(webClient));
+        PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
+        downloader.setDownloadStrategy(new KPDownload());
         return downloader.getPDF("", "");
     }
 
@@ -240,19 +137,17 @@ public class EpaperService {
         new Thread(() -> {
             Epaper epaper;
             try {
-                PDFDownloader downloader = new PDFDownloader();
+                PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
                 if(publication.equals("HT")) {
-                    downloader.setDownloadStrategy(new HTDownload(webClient));
+                    downloader.setDownloadStrategy(new HTDownload());
                 } else {
-                    downloader.setDownloadStrategy(new TOIDownload(webClient));
+                    downloader.setDownloadStrategy(new TOIDownload());
                 }
                 epaper = (Epaper) downloader.getPDF(mainEdition, date).get("epaper");
                 // AppUtils.compressPDF(epaper);
                 emailService.mailPDF(emailId, epaper);
             } catch (Exception e) {
-                e.printStackTrace();
-                for(int i=0; i<10; i++)
-                    log.error("COULD NOT GENERATE, COMPRESS AND MAIL REQUESTED PDF");
+                log.error("EMAIL OPERATION FAILED - {}", e.getMessage());
             }
         }).start();
     }

@@ -11,10 +11,9 @@ import com.epapers.epapers.service.downloader.HTDownload;
 import com.epapers.epapers.service.downloader.PDFDownloader;
 import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.util.AppUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -24,6 +23,7 @@ import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.File;
+import java.net.http.HttpClient;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -34,17 +34,12 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class EpapersBot extends TelegramLongPollingBot {
-    @Autowired
-    EpaperService ePaperService;
 
-    @Autowired
-    UserService userService;
-
-    @Autowired
-    SubscriptionService subscriptionService;
-
-    @Autowired
-    WebClient webClient;
+    private final EpaperService ePaperService;
+    private final UserService userService;
+    private final SubscriptionService subscriptionService;
+    private final HttpClient httpClient;
+    private final ObjectMapper objectMapper;
 
     private static final String BOT_TOKEN = AppConfig.TELEGRAM_BOT_TOKEN;
     private static final String BOT_USERNAME = "ePapers";
@@ -70,6 +65,14 @@ public class EpapersBot extends TelegramLongPollingBot {
         /help to view this again
         """;
 
+    public EpapersBot(EpaperService epaperService, UserService userService, SubscriptionService subscriptionService, HttpClient httpClient, ObjectMapper objectMapper) {
+        this.ePaperService = epaperService;
+        this.userService = userService;
+        this.subscriptionService = subscriptionService;
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     public String getBotUsername() {
         return BOT_USERNAME;
@@ -91,7 +94,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                     String userMessage = update.getMessage().getText().toUpperCase();
                     log.info("\n\nINCOMING MESSAGE: {} FROM USER: {}\n\n", userMessage, user.getUserName()+"_"+user.getFirstName()+"_"+user.getLastName());
                     StringBuilder editionPrompt = new StringBuilder();
-                    PDFDownloader downloader = new PDFDownloader();
+                    PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
 
                     switch (userMessage) {
                         case "/HELP" -> executeAsync(new SendMessage(chatId, PROMPT_STRING));
@@ -120,14 +123,14 @@ public class EpapersBot extends TelegramLongPollingBot {
                         }
                         case "/HTBNG" -> {
                             executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing HT ePaper for : " + BENGALURU_CITY_KANNADA + " 🎉"));
-                            downloader.setDownloadStrategy(new HTDownload(webClient));
+                            downloader.setDownloadStrategy(new HTDownload());
                             Epaper htpdf = (Epaper) downloader.getPDF("102", AppUtils.getTodaysDate()).get("epaper");
                             executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htpdf.getFile().getName())));
                             executeAsync(new SendDocument(chatId, new InputFile(htpdf.getFile())));
                         }
                         case "/TOIBNG" -> {
                             executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing TOI ePaper for " + BENGALURU_CITY_KANNADA + " 🎉"));
-                            downloader.setDownloadStrategy(new TOIDownload(webClient));
+                            downloader.setDownloadStrategy(new TOIDownload());
                             Epaper toipdf = (Epaper) downloader.getPDF("toibgc", AppUtils.getTodaysDate()).get("epaper");
                             executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toipdf.getFile().getName())));
                             executeAsync(new SendDocument(chatId, new InputFile(toipdf.getFile())));
@@ -187,7 +190,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Oops! Command failed! - {}", e.getMessage());
                     handleErrors(chatId, "Could not process that request.");
                 }
             }
@@ -202,18 +205,18 @@ public class EpapersBot extends TelegramLongPollingBot {
             String editionId = metaData[1];
             String publication = metaData[2];
             executeAsync(new SendMessage(chatId, "🎉 Cool! Preparing " + publication + " ePaper for : " + city + " 🎉"));
-            PDFDownloader downloader = new PDFDownloader();
+            PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
             
             try{
                 switch(publication) {
                     case "HT":
-                        downloader.setDownloadStrategy(new HTDownload(webClient));
+                        downloader.setDownloadStrategy(new HTDownload());
                         Epaper htPDF = (Epaper) downloader.getPDF(editionId, AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, htPDF.getFile().getName())));
                         executeAsync(new SendDocument(chatId, new InputFile(htPDF.getFile())));
                         break;
                     case "TOI":
-                        downloader.setDownloadStrategy(new TOIDownload(webClient));
+                        downloader.setDownloadStrategy(new TOIDownload());
                         Epaper toiPDF = (Epaper) downloader.getPDF(editionId.toLowerCase(), AppUtils.getTodaysDate()).get(EPAPER_KEY_STRING);
                         executeAsync(new SendMessage(chatId, ACCESS_STRING + String.format(FILE_ACCESS_URL, toiPDF.getFile().getName())));
                         File file = toiPDF.getFile();
@@ -224,7 +227,7 @@ public class EpapersBot extends TelegramLongPollingBot {
                     default: break;
                 }
             } catch(Exception e) {
-                e.printStackTrace();
+                log.error("ERROR SENDING PDF FILE! {}", e.getMessage());
                 handleErrors(chatId, "Something went wrong while downloading ePaper. 😢\n\n Try downloading it directly from " + SERVER_URL);
             }
         }
@@ -280,15 +283,15 @@ public class EpapersBot extends TelegramLongPollingBot {
                 Map<String, String> editions = subscription.getEditions();
                 String toiEdition = editions.get("TOI");
                 String htEdition = editions.get("HT");
-                PDFDownloader downloader = new PDFDownloader();
+                PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
 
                 if (htEdition != null) {
                     try {
-//                        downloader.setDownloadStrategy(new HTDownload(webClient));
+//                        downloader.setDownloadStrategy(new HTDownload());
 //                        Epaper htPdf = (Epaper) downloader.getPDF(htEdition, today).get(EPAPER_KEY_STRING);
-//                         if (!cacheOnly) {
-//                             sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
-//                         }
+//                        if (!cacheOnly) {
+//                            sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+//                        }
 
                         if (htEdition.equals("102")) {
                             log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
@@ -304,7 +307,7 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                 if (toiEdition != null) {
                     try {
-                        downloader.setDownloadStrategy(new TOIDownload(webClient));
+                        downloader.setDownloadStrategy(new TOIDownload());
                         Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
                         if(!cacheOnly) {
                             sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());

@@ -1,20 +1,16 @@
 package com.epapers.epapers.config;
 
-import java.time.Duration;
-import java.util.Optional;
-import java.util.Properties;
-
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import reactor.netty.http.client.HttpClient;
-import reactor.netty.resources.ConnectionProvider;
+import java.net.http.HttpClient;
+import java.util.Optional;
+import java.util.Properties;
 
 @Configuration
 public class AppConfig {
@@ -24,8 +20,6 @@ public class AppConfig {
     public static final int INPUT_BUFFER_SIZE = 4096;
     public final static String HOSTNAME = Optional.ofNullable(System.getenv("EPAPERS_HOSTNAME")).orElse("http://localhost:8000");
     public final static String TELEGRAM_BOT_TOKEN = System.getenv("TELEGRAM_BOT_TOKEN");
-    public static final String PORTFOLIO_URL = System.getenv("PORTFOLIO_URL");
-    public static final String CHATSTOMP_URL = System.getenv("CHATSTOMP_URL");
 
     @Bean
     JavaMailSender getJavaMailSender() {
@@ -54,26 +48,14 @@ public class AppConfig {
     }
 
     @Bean
-    WebClient webClient() {
-        // configure pooling strategy, max connections, connection availability with eviction
-        ConnectionProvider provider = ConnectionProvider.builder("fixed")
-                .maxConnections(200)
-                .maxIdleTime(Duration.ofSeconds(5))
-                .maxLifeTime(Duration.ofSeconds(30))
-                .pendingAcquireTimeout(Duration.ofSeconds(5))
-                .evictInBackground(Duration.ofSeconds(240))
-                .build();
+    HttpClient httpClient() {
+        return HttpClient.newHttpClient();
+    }
 
-        // configure in-memory size for http request and response bodies, if it exceeds, write to disk:
-        final int size = 50 * 1024 * 1024;  // 16MB
-        final ExchangeStrategies strategies = ExchangeStrategies.builder()
-                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
-                .build();
-
-        // return custom webclient instance with defined config
-        return WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(HttpClient.create(provider)))
-                .exchangeStrategies(strategies)
-                .build();
+    @Bean
+    ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
     }
 }

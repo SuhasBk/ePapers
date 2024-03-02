@@ -2,6 +2,7 @@ package com.epapers.epapers.util;
 
 import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Epaper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.xobject.PdfImageXObject;
@@ -13,7 +14,11 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,16 +92,14 @@ public class AppUtils {
     public static boolean isLargeFile(File file, String serviceName) {
         boolean result = false;
         long fileSizeMB = file.length() / (1024*1024);
-        switch(serviceName) {
-            case "TELEGRAM":
-                result = fileSizeMB > 50;
-                break;
-            case "GMAIL":
-                result = fileSizeMB > 25;
-                break;
-            default:
-                result = true;
-        }
+        result = switch (serviceName) {
+            case "TELEGRAM" ->
+                    fileSizeMB > 50;
+            case "GMAIL" ->
+                    fileSizeMB > 25;
+            default ->
+                    true;
+        };
         return result;
     }
 
@@ -122,5 +125,29 @@ public class AppUtils {
 
     public static String getIPAddr(HttpServletRequest request) {
         return request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
+    }
+
+    public static <T> T fetchHttpResponse(HttpClient httpClient, ObjectMapper objectMapper, String url, Class<T> returnType) {
+        T finalResponseBody = null;
+        HttpRequest httpRequest = HttpRequest
+                .newBuilder(URI.create(url))
+                .build();
+
+        HttpResponse<String> httpResponse = null;
+        try {
+            httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+            if (httpResponse.statusCode() == 200) {
+                finalResponseBody = objectMapper.readValue(httpResponse.body(), returnType);
+            } else {
+                log.error("HTTP Connection Failed! - {}", url);
+                throw new RuntimeException("HTTP connection failed to URL - " + url);
+            }
+        } catch (
+                IOException |
+                InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return finalResponseBody;
     }
 }

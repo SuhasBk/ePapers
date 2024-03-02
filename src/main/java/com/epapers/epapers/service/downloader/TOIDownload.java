@@ -1,27 +1,25 @@
 package com.epapers.epapers.service.downloader;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import org.springframework.web.reactive.function.client.WebClient;
-
 import com.epapers.epapers.config.AppConfig;
 import com.epapers.epapers.model.Epaper;
 import com.epapers.epapers.model.TOIPages;
+import com.epapers.epapers.util.AppUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
-
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Mono;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 @Slf4j
 public class TOIDownload implements DownloadStrategy{
@@ -29,11 +27,8 @@ public class TOIDownload implements DownloadStrategy{
     private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
     private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
     private static final String EPAPER_KEY_STRING = "epaper";
-    private WebClient webClient;
-
-    public TOIDownload(WebClient webClient) {
-        this.webClient = webClient;
-    }
+    private HttpClient httpClient;
+    private ObjectMapper objectMapper;
 
     public Epaper getPDF(List<String> links, String edition, String date) throws Exception {
         log.info("Starting downloads for edition: {}", edition);
@@ -54,14 +49,8 @@ public class TOIDownload implements DownloadStrategy{
 
         document.open();
         links.forEach(imgLink -> callableList.add(() -> {
-            // scale factor based on publication:
             final float scaleFactor = AppConfig.TOI_SCALE_PERCENT;
-
-            Image image = Image.getInstance(Objects.requireNonNull(Mono.from(webClient.get()
-                            .uri(imgLink)
-                            .retrieve()
-                            .bodyToMono(byte[].class))
-                            .block()));
+            Image image = Image.getInstance(new URL(imgLink));
             image.scalePercent(scaleFactor);
             return image;
         }));
@@ -82,7 +71,7 @@ public class TOIDownload implements DownloadStrategy{
                 }
             });
         } catch(Exception e) {
-            e.printStackTrace();
+            log.error("Something horribly went wrong! - {}", e.getMessage());
         } finally {
             document.close();
             log.info("Finished collecting pages: {}\n", document);
@@ -96,6 +85,12 @@ public class TOIDownload implements DownloadStrategy{
     }
 
     @Override
+    public void initialize(HttpClient httpClient, ObjectMapper objectMapper) {
+        this.httpClient = httpClient;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
     public Map<String, Object> downloadPDF(String mainEdition, String date) {
         Map<String, Object> response = new HashMap<>();
         List<String> pagesLinks = new ArrayList<>();
@@ -106,13 +101,7 @@ public class TOIDownload implements DownloadStrategy{
         String month = dateSplit[1];
         String year = dateSplit[2];
         String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
-
-        TOIPages pages = webClient
-                .get()
-                .uri(metaUrl)
-                .retrieve()
-                .bodyToMono(TOIPages.class)
-                .block();
+        TOIPages pages = AppUtils.fetchHttpResponse(httpClient, objectMapper, metaUrl, TOIPages.class);
 
         if(pages != null) {
             pages.getDayIndex().forEach(pageData -> {
@@ -124,7 +113,7 @@ public class TOIDownload implements DownloadStrategy{
                 epaper = getPDF(pagesLinks, mainEdition, date);
                 response.put(EPAPER_KEY_STRING, epaper);
             } catch (Exception e) {
-                log.error("Error occurred: {}", e);
+                log.error("Something horribly went wrong! - {}", e.getMessage());
             }
         }
         return response;
