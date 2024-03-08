@@ -8,6 +8,7 @@ import com.epapers.epapers.service.EpaperService;
 import com.epapers.epapers.service.SubscriptionService;
 import com.epapers.epapers.service.UserService;
 import com.epapers.epapers.service.downloader.HTDownload;
+import com.epapers.epapers.service.downloader.KPDownload;
 import com.epapers.epapers.service.downloader.PDFDownloader;
 import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.util.AppUtils;
@@ -287,15 +288,16 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                 if (htEdition != null) {
                     try {
-//                        downloader.setDownloadStrategy(new HTDownload());
-//                        Epaper htPdf = (Epaper) downloader.getPDF(htEdition, today).get(EPAPER_KEY_STRING);
-//                        if (!cacheOnly) {
-//                            sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
-//                        }
+                       downloader.setDownloadStrategy(new HTDownload());
+                       Epaper htPdf = (Epaper) downloader.getPDF(htEdition, today).get(EPAPER_KEY_STRING);
+                       if (!cacheOnly) {
+                           sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+                       }
 
                         if (htEdition.equals("102")) {
                             log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
-                            Epaper kpPdf = (Epaper) ePaperService.getKannadaPrabha().get(EPAPER_KEY_STRING);
+                            downloader.setDownloadStrategy(new KPDownload());
+                            Epaper kpPdf = (Epaper) downloader.getPDF("", "").get(EPAPER_KEY_STRING);
                             if (!cacheOnly) {
                                 sendSubscriptionMessage(chatId,"Access today's bonus KP ePaper here: "+ String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()),kpPdf.getFile());
                             }
