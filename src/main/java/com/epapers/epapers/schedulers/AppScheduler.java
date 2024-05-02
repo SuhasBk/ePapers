@@ -11,6 +11,7 @@ import com.epapers.epapers.telegram.EpapersBot;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -46,10 +47,10 @@ public class AppScheduler {
     //         .block();
     // }
 
-    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedDelay = 5, initialDelay = 5, timeUnit = TimeUnit.SECONDS)
     public void keepAlive() throws Exception {
-        httpClient.send(HttpRequest.newBuilder().uri(new URI(SERVER_URL)).GET().build(), null);
-        httpClient.send(HttpRequest.newBuilder().uri(new URI(CHATSTOMP_URL)).GET().build(), null);
+        httpClient.send(HttpRequest.newBuilder().uri(new URI(SERVER_URL)).GET().build(), BodyHandlers.ofString());
+        httpClient.send(HttpRequest.newBuilder().uri(new URI(CHATSTOMP_URL)).GET().build(), BodyHandlers.ofString());
     }
 
     @Scheduled(fixedDelay = 10, initialDelay = 10, timeUnit = TimeUnit.MINUTES)
