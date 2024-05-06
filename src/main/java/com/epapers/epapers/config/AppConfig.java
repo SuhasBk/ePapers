@@ -1,16 +1,18 @@
 package com.epapers.epapers.config;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.http.HttpClient;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.Properties;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.net.http.HttpClient;
-import java.util.Optional;
-import java.util.Properties;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 public class AppConfig {
@@ -50,7 +52,9 @@ public class AppConfig {
 
     @Bean
     HttpClient httpClient() {
-        return HttpClient.newHttpClient();
+        return HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(60))
+            .build();
     }
 
     @Bean
