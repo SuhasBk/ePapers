@@ -73,6 +73,11 @@ public class AppScheduler {
     //     }
     // }
 
+    @Scheduled(cron = "30 7 * * *", zone = "Asia/Kolkata")
+    public void cacheTelegramSubscriptions() {
+        telegramBot.triggerSubscriptions(true);
+    }
+
     @Scheduled(cron = "0 0 8 * * ?", zone = "Asia/Kolkata")
     public void telegramSubscriptions() {
         telegramBot.triggerSubscriptions(false);
