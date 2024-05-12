@@ -121,7 +121,7 @@ public class EpaperService {
         HTPage[] htPages = AppUtils.fetchHttpResponse(httpClient, objectMapper, url, HTPage[].class);
 
          if(htPages != null && htPages.length != 0) {
-             Arrays.stream(htPages).toList().forEach(page -> links.add(page.getHighResolution().replace("_mr", "")));
+            Arrays.stream(htPages).toList().forEach(page -> links.add(page.getHighResolution().replace("_mr", "")));
          }
 
         return links;

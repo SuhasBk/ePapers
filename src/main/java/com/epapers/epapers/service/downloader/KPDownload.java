@@ -9,6 +9,8 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfCopy;
 import com.itextpdf.text.pdf.PdfReader;
+
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileNotFoundException;
@@ -39,6 +41,7 @@ public class KPDownload implements DownloadStrategy {
     }
 
     @Override
+    @Retry(name = "")
     public Map<String, Object> downloadPDF(String mainEdition, String date) {
         date = AppUtils.getTodaysDate();
         Map<String, Object> response = new HashMap<>();
