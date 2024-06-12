@@ -48,6 +48,8 @@ public class AppScheduler {
                 .uri(new URI(CHATSTOMP_URL))
                 .GET()
                 .build(), BodyHandlers.ofString());
+            
+            log.info("Keeping services alive ✌️😌");
         } catch (IOException | InterruptedException | URISyntaxException e) {
             log.error("Error while keeping alive: {}", e.getLocalizedMessage());
         }
