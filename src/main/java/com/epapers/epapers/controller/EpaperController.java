@@ -9,6 +9,7 @@ import com.epapers.epapers.telegram.EpapersBot;
 import com.epapers.epapers.util.AppUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.apache.http.HttpStatus;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpHeaders;
@@ -32,10 +33,10 @@ public class EpaperController {
 
     private final EpaperService ePaperService;
     private final EpapersBot telegramBot;
-    private final HttpClient httpClient;
+    private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public EpaperController(EpaperService epaperService, EpapersBot epapersBot, HttpClient httpClient, ObjectMapper objectMapper) {
+    public EpaperController(EpaperService epaperService, EpapersBot epapersBot, OkHttpClient httpClient, ObjectMapper objectMapper) {
         this.ePaperService = epaperService;
         this.telegramBot = epapersBot;
         this.httpClient = httpClient;

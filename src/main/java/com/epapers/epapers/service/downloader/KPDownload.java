@@ -12,6 +12,9 @@ import com.itextpdf.text.pdf.PdfReader;
 
 import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -31,12 +34,12 @@ public class KPDownload implements DownloadStrategy {
 
     private static final String KP_BNG_PAGES_LINK = "https://www.enewspapr.com/OutSourcingDataChanged.php?operation=getPageArticleDetails&selectedIssueId=KANPRABHA_BG_%s&data=0";
     private static final String KP_IMAGE_BASE_URL = "https://www.enewspapr.com/News/KANPRABHA/BG/%s/%s/%s/%s";
-    private HttpClient httpClient;
+    private OkHttpClient httpClient;
 
     private static final String EPAPER_KEY_STRING = "epaper";
 
     @Override
-    public void initialize(HttpClient httpClient, ObjectMapper objectMapper) {
+    public void initialize(OkHttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = httpClient;
     }
 
@@ -61,17 +64,19 @@ public class KPDownload implements DownloadStrategy {
 
         String metaUrl = String.format(KP_BNG_PAGES_LINK, dateString);
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(metaUrl))
+        Request request = new Request.Builder()
+                .url(metaUrl)
                 .build();
 
         String links = "";
-        try {
-            HttpResponse<String> res = this.httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            links = res.body();
-        } catch (
-                IOException |
-                InterruptedException e) {
+
+        try (Response resp = this.httpClient.newCall(request).execute()) {
+            if (resp.isSuccessful() && resp.body() != null) {
+                links = resp.body().string();
+            } else {
+                throw new IOException("Unexpected code " + resp);
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 

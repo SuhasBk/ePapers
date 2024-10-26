@@ -14,6 +14,7 @@ import com.epapers.epapers.service.downloader.TOIDownload;
 import com.epapers.epapers.util.AppUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
@@ -39,7 +40,7 @@ public class EpapersBot extends TelegramLongPollingBot {
     private final EpaperService ePaperService;
     private final UserService userService;
     private final SubscriptionService subscriptionService;
-    private final HttpClient httpClient;
+    private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
     private static final String BOT_TOKEN = AppConfig.TELEGRAM_BOT_TOKEN;
@@ -66,7 +67,7 @@ public class EpapersBot extends TelegramLongPollingBot {
         /help to view this again
         """;
 
-    public EpapersBot(EpaperService epaperService, UserService userService, SubscriptionService subscriptionService, HttpClient httpClient, ObjectMapper objectMapper) {
+    public EpapersBot(EpaperService epaperService, UserService userService, SubscriptionService subscriptionService, OkHttpClient httpClient, ObjectMapper objectMapper) {
         this.ePaperService = epaperService;
         this.userService = userService;
         this.subscriptionService = subscriptionService;
@@ -307,17 +308,17 @@ public class EpapersBot extends TelegramLongPollingBot {
                     }
                 }
 
-                // if (toiEdition != null) {
-                //     try {
-                //         downloader.setDownloadStrategy(new TOIDownload());
-                //         Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
-                //         if(!cacheOnly) {
-                //             sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
-                //         }
-                //     } catch (Exception e) {
-                //         log.error("TOI Subscription service failed. - {}", e.getMessage());
-                //     }
-                // }
+                 if (toiEdition != null) {
+                     try {
+                         downloader.setDownloadStrategy(new TOIDownload());
+                         Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
+                         if(!cacheOnly) {
+                             sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+                         }
+                     } catch (Exception e) {
+                         log.error("TOI Subscription service failed. - {}", e.getMessage());
+                     }
+                 }
 
                 log.info("ePapers successfully sent to - {}", chatId);
                 

@@ -10,6 +10,8 @@ import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,7 +29,7 @@ public class TOIDownload implements DownloadStrategy{
     private static final String TOI_BASE_URL = "https://asset.harnscloud.com/PublicationData/TOI/";
     private static final String TOI_META_URL = TOI_BASE_URL + "%s/%s/%s/%s/DayIndex/%s_%s.json";
     private static final String EPAPER_KEY_STRING = "epaper";
-    private HttpClient httpClient;
+    private OkHttpClient httpClient;
     private ObjectMapper objectMapper;
 
     public Epaper getPDF(List<String> links, String edition, String date) throws Exception {
@@ -50,7 +52,7 @@ public class TOIDownload implements DownloadStrategy{
         document.open();
         links.forEach(imgLink -> callableList.add(() -> {
             final float scaleFactor = AppConfig.TOI_SCALE_PERCENT;
-            Image image = Image.getInstance(new URL(imgLink));
+            Image image = AppUtils.fetchAndScaleImage(this.httpClient, imgLink, scaleFactor); //Image.getInstance(new URL(imgLink));
             image.scalePercent(scaleFactor);
             return image;
         }));
@@ -85,7 +87,7 @@ public class TOIDownload implements DownloadStrategy{
     }
 
     @Override
-    public void initialize(HttpClient httpClient, ObjectMapper objectMapper) {
+    public void initialize(OkHttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
     }
@@ -101,6 +103,12 @@ public class TOIDownload implements DownloadStrategy{
         String month = dateSplit[1];
         String year = dateSplit[2];
         String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
+        Request request = new Request.Builder()
+                .url(metaUrl)
+                .get()
+                .header("User-Agent", "myagent")
+                .header("Referer", "https://epaper.indiatimes.com/")
+                .build();
         TOIPages pages = AppUtils.fetchHttpResponse(httpClient, objectMapper, metaUrl, TOIPages.class);
 
         if(pages != null) {

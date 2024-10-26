@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.util.Optional;
 import java.util.Properties;
 
+import okhttp3.OkHttpClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -55,6 +56,13 @@ public class AppConfig {
         return HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(60))
             .build();
+    }
+
+    @Bean
+    OkHttpClient okHttpClient () {
+        return new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofSeconds(60))
+                .build();
     }
 
     @Bean

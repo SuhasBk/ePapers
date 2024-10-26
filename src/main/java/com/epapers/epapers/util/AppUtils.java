@@ -7,6 +7,9 @@ import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.kernel.pdf.xobject.PdfImageXObject;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -14,17 +17,14 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import com.itextpdf.text.Image;
 
 @Slf4j
 public class AppUtils {
@@ -127,27 +127,66 @@ public class AppUtils {
         return request.getHeader("X-FORWARDED-FOR") != null ? request.getHeader("X-FORWARDED-FOR") : request.getRemoteAddr();
     }
 
-    public static <T> T fetchHttpResponse(HttpClient httpClient, ObjectMapper objectMapper, String url, Class<T> returnType) {
+    public static <T> T fetchHttpResponse(OkHttpClient client, ObjectMapper objectMapper, String url, Class<T> returnType) {
         T finalResponseBody = null;
-        HttpRequest httpRequest = HttpRequest
-                .newBuilder(URI.create(url))
-                .build();
+        Request request = null;
+        Request.Builder reqBuilder = new Request.Builder()
+                .url(url)
+                .get();
 
-        HttpResponse<String> httpResponse = null;
-        try {
-            httpResponse = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-            if (httpResponse.statusCode() == 200) {
-                finalResponseBody = objectMapper.readValue(httpResponse.body(), returnType);
+        if (url.contains("harnscloud")) {
+            request = reqBuilder.header("User-Agent", "myagent")
+                    .header("Referer", "https://epaper.indiatimes.com/")
+                    .build();
+        } else {
+            request = reqBuilder.build();
+        }
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful() && response.body() != null) {
+                finalResponseBody = objectMapper.readValue(response.body().string(), returnType);
             } else {
-                log.error("HTTP Connection Failed! - {}", url);
-                throw new RuntimeException("HTTP connection failed to URL - " + url);
+                throw new RuntimeException("HTTP connection failed with status code: " + response.code());
             }
-        } catch (
-                IOException |
-                InterruptedException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
         return finalResponseBody;
+    }
+
+    private static byte[] toByteArray(InputStream input) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        byte[] data = new byte[1024];
+        int nRead;
+        while ((nRead = input.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+        return buffer.toByteArray();
+    }
+
+    public static Image fetchAndScaleImage(OkHttpClient client, String imgLink, float scaleFactor) {
+        Request request = new Request.Builder()
+                .url(imgLink)
+                .header("User-Agent", "myagent")
+                .header("Referer", "https://epaper.indiatimes.com/")
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful() || response.body() == null) {
+                throw new RuntimeException("Failed to download image: " + response);
+            }
+
+            // Retrieve the image data as an InputStream
+            InputStream inputStream = response.body().byteStream();
+
+            // Create the Image instance from the InputStream
+            Image image = Image.getInstance(toByteArray(inputStream));
+            image.scalePercent(scaleFactor); // Scale the image as required
+            return image;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching or scaling image", e);
+        }
     }
 }

@@ -11,6 +11,7 @@ import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.PdfWriter;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,7 +25,7 @@ public class HTDownload implements DownloadStrategy {
 
     private static final String HT_BASE_URL = "https://epaper.hindustantimes.com";
     private static final String EPAPER_KEY_STRING = "epaper";
-    private HttpClient httpClient;
+    private OkHttpClient httpClient;
     private ObjectMapper objectMapper;
 
     public List<String> getHTSupplementEditions(String mainEdition, String date) {
@@ -111,7 +112,7 @@ public class HTDownload implements DownloadStrategy {
     }
 
     @Override
-    public void initialize(HttpClient httpClient, ObjectMapper objectMapper) {
+    public void initialize(OkHttpClient httpClient, ObjectMapper objectMapper) {
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
     }

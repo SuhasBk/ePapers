@@ -11,6 +11,7 @@ import com.epapers.epapers.util.AppUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,10 +28,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EpaperService {
     private final EmailService emailService;
-    private final HttpClient httpClient;
+    private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
-    public EpaperService(EmailService emailService, HttpClient httpClient, ObjectMapper objectMapper) {
+    public EpaperService(EmailService emailService, OkHttpClient httpClient, ObjectMapper objectMapper) {
         this.emailService = emailService;
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
