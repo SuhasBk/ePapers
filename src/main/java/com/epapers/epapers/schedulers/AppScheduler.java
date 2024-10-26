@@ -36,24 +36,24 @@ public class AppScheduler {
     private static final String SERVER_URL = AppConfig.HOSTNAME;
     private static final String CHATSTOMP_URL = AppConfig.CHATSTOMP_URL;
 
-    @Scheduled(fixedDelay = 5, initialDelay = 2, timeUnit = TimeUnit.MINUTES)
-    public void keepAlive() {
-        try {
-            httpClient.send(HttpRequest.newBuilder()
-                    .uri(new URI(SERVER_URL))
-                    .GET()
-                    .build(), BodyHandlers.ofString());
-
-            httpClient.send(HttpRequest.newBuilder()
-                .uri(new URI(CHATSTOMP_URL))
-                .GET()
-                .build(), BodyHandlers.ofString());
-            
-            log.info("Keeping services alive ✌️😌");
-        } catch (IOException | InterruptedException | URISyntaxException e) {
-            log.error("Error while keeping alive: {}", e.getLocalizedMessage());
-        }
-    }
+//    @Scheduled(fixedDelay = 5, initialDelay = 2, timeUnit = TimeUnit.MINUTES)
+//    public void keepAlive() {
+//        try {
+//            httpClient.send(HttpRequest.newBuilder()
+//                    .uri(new URI(SERVER_URL))
+//                    .GET()
+//                    .build(), BodyHandlers.ofString());
+//
+//            httpClient.send(HttpRequest.newBuilder()
+//                .uri(new URI(CHATSTOMP_URL))
+//                .GET()
+//                .build(), BodyHandlers.ofString());
+//
+//            log.info("Keeping services alive ✌️😌");
+//        } catch (IOException | InterruptedException | URISyntaxException e) {
+//            log.error("Error while keeping alive: {}", e.getLocalizedMessage());
+//        }
+//    }
 
     @Scheduled(fixedDelay = 30, initialDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void collectGarbage() {

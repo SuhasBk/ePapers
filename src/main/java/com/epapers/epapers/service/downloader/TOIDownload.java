@@ -103,12 +103,6 @@ public class TOIDownload implements DownloadStrategy{
         String month = dateSplit[1];
         String year = dateSplit[2];
         String metaUrl = String.format(TOI_META_URL, mainEdition, year, month, day, date.replace("/","_"), mainEdition);
-        Request request = new Request.Builder()
-                .url(metaUrl)
-                .get()
-                .header("User-Agent", "myagent")
-                .header("Referer", "https://epaper.indiatimes.com/")
-                .build();
         TOIPages pages = AppUtils.fetchHttpResponse(httpClient, objectMapper, metaUrl, TOIPages.class);
 
         if(pages != null) {
