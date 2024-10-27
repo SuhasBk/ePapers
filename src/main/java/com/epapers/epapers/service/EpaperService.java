@@ -155,8 +155,25 @@ public class EpaperService {
 
     public FileSystemResource getFile(String fileName) {
         File requestedFile = new File(fileName);
-        if (!requestedFile.exists() || !requestedFile.getName().endsWith("pdf")) {
+        if (!requestedFile.getName().endsWith("pdf")) {
             return new FileSystemResource("null");
+        }
+        if (!requestedFile.exists()) {
+            String[] fileNameParts = fileName.split("_");
+            String mainEdition = fileNameParts[3].split(".pdf")[0];
+            String date = fileNameParts[0] + "/" + fileNameParts[1] + "/" + fileNameParts[2];
+
+            PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
+            if(mainEdition.matches("\\d+")) {
+                downloader.setDownloadStrategy(new HTDownload());
+            } else if (mainEdition.equals("BNG")) {
+                downloader.setDownloadStrategy(new KPDownload());
+            } else {
+                downloader.setDownloadStrategy(new TOIDownload());
+            }
+
+            Epaper pdfDocument = (Epaper) downloader.getPDF(mainEdition, date).get("epaper");
+            return new FileSystemResource(pdfDocument.getFile().getAbsolutePath());
         }
         return new FileSystemResource(requestedFile);
     }
