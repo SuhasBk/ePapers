@@ -285,22 +285,19 @@ public class EpapersBot extends TelegramLongPollingBot {
                 Map<String, String> editions = subscription.getEditions();
                 String toiEdition = editions.get("TOI");
                 String htEdition = editions.get("HT");
-                PDFDownloader downloader = new PDFDownloader(httpClient, objectMapper);
 
                 if (htEdition != null) {
                     try {
-                       downloader.setDownloadStrategy(new HTDownload());
-                       Epaper htPdf = (Epaper) downloader.getPDF(htEdition, today).get(EPAPER_KEY_STRING);
+                       Epaper htPdf = new Epaper(today, htEdition);
                        if (!cacheOnly) {
-                           sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), htPdf.getFile());
+                           sendSubscriptionMessage(chatId, "Access your HT ePaper here: "+ String.format(FILE_ACCESS_URL, htPdf.getFile().getName()), null);
                        }
 
                         if (htEdition.equals("102")) {
                             log.info("Sending surprise paper - Kannada Prabha to user/group - {}", chatId);
-                            downloader.setDownloadStrategy(new KPDownload());
-                            Epaper kpPdf = (Epaper) downloader.getPDF("", "").get(EPAPER_KEY_STRING);
+                            Epaper kpPdf = new Epaper(today, "BNG");
                             if (!cacheOnly) {
-                                sendSubscriptionMessage(chatId,"Access today's bonus KP ePaper here: "+ String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()),kpPdf.getFile());
+                                sendSubscriptionMessage(chatId,"Access today's bonus KP ePaper here: "+ String.format(FILE_ACCESS_URL, kpPdf.getFile().getName()), null);
                             }
                         }
                     } catch (Exception e) {
@@ -310,10 +307,9 @@ public class EpapersBot extends TelegramLongPollingBot {
 
                  if (toiEdition != null) {
                      try {
-                         downloader.setDownloadStrategy(new TOIDownload());
-                         Epaper toiPdf = (Epaper) downloader.getPDF(toiEdition, today).get(EPAPER_KEY_STRING);
+                         Epaper toiPdf = new Epaper(today, toiEdition);
                          if(!cacheOnly) {
-                             sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), toiPdf.getFile());
+                             sendSubscriptionMessage(chatId, "Access your TOI ePaper here: " + String.format(FILE_ACCESS_URL, toiPdf.getFile().getName()), null);
                          }
                      } catch (Exception e) {
                          log.error("TOI Subscription service failed. - {}", e.getMessage());

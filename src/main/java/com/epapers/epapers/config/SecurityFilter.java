@@ -125,6 +125,7 @@ public class SecurityFilter {
                                 "/api/getEditionList**",
                                 "/api/register**",
                                 "/api/trigger",
+                                "/api/triggerCache",
                                 "/api/sendMail")
                         .permitAll()
                         .anyRequest()
